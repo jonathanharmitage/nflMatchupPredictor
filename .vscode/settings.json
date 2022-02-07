@@ -1,0 +1,31 @@
+{
+  "editor.rulers": [119],
+  "editor.fontSize": 14,
+  "editor.formatOnSave": true,
+  "editor.suggest.localityBonus": true,
+  "workbench.colorTheme": "GitHub Dark",
+  "workbench.iconTheme":"material-icon-theme",
+  "autoDocstring.docstringFormat": "google",
+  "autoDocstring.startOnNewLine": true,
+  "autoDocstring.includeExtendedSummary": false,
+  "autoDocstring.includeName": true,
+  "autoDocstring.guessTypes": true,
+  "python.languageServer": "Pylance",
+  "python.linting.enabled": true,
+  "python.linting.lintOnSave": true,
+  "python.linting.flake8Enabled": true,
+  "python.linting.ignorePatterns": [".vscode/*.py"],
+  "python.formatting.provider": "black",
+  "cSpell.minWordLength": 4,
+  "cSpell.words": [
+  	"jonathanarmitage",
+    "Armitage",
+    "githubuser",
+    "developertown",
+    "nflMatchupPredictor",
+  ],
+  "cSpell.enableFiletypes": [
+    "!python",
+    "!toml"
+  ]
+}

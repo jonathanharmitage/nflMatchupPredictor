@@ -1,0 +1,95 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+##################################
+### top-most EditorConfig file ###
+##################################
+root = true
+
+####################################
+### All files end with a newline ###
+####################################
+[*]
+indent_style = space
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+
+#####################
+### Python Config ###
+#####################
+[*.py]
+indent_style = space
+indent_size = 4
+charset = utf-8
+trim_trailing_whitespace = true
+
+
+###################
+### JSON Config ###
+###################
+[*.json]
+indent_style = space
+indent_size = 2
+charset = utf-8
+insert_final_newline = ignore
+
+
+################################
+### Restructured Text Config ###
+################################
+[*.rst]
+indent_style = space
+indent_size = 3
+max_line_length = 89
+
+
+##############################
+### Markdown / Text Config ###
+##############################
+[*.{md, txt}]
+indent_style = space
+indent_size = 2
+max_line_length = 89
+
+
+###################
+### YAML Config ###
+###################
+[*.{yml, yaml}]
+indent_style = space
+indent_size = 2
+
+
+#########################
+### Javascript Config ###
+#########################
+[*.js]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+
+###################
+### HTML Config ###
+###################
+[*.html]
+indent_style = space
+indent_size = 2
+charset = utf-8
+
+
+######################
+### Makfile Config ###
+######################
+[Makefile]
+indent_style = space
+indent_size = 2
+
+
+#######################################
+### Exact files either package.json ###
+#######################################
+[package.json]
+indent_style = space
+indent_size = 2
