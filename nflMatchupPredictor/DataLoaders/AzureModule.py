@@ -1,10 +1,10 @@
 import os
-from dotenv import load_dotenv
+
 from azure.storage.blob import BlobServiceClient
+from dotenv import load_dotenv
 
 
 class AzureModule:
-
     def __init__(self, ctn_name, verbose=False):
         """
         Instantiates class.
@@ -30,10 +30,12 @@ class AzureModule:
         Connect to Azure resource group.
         """
         blob_service_client = BlobServiceClient.from_connection_string(
-            self.azure_cnx_string)
+            self.azure_cnx_string
+        )
 
         container_client = blob_service_client.get_container_client(
-            container=self.ctn_name)
+            container=self.ctn_name
+        )
 
         return container_client
 
@@ -71,8 +73,11 @@ class AzureModule:
 
         if self.verbose:
             print("\n-- ", os.listdir(self.local_data_dir), " --\n\n")
-            print("\n-- Number of Files == {} --\n".format(len(os.listdir(self.local_data_dir))))
-
+            print(
+                "\n-- Number of Files == {} --\n".format(
+                    len(os.listdir(self.local_data_dir))
+                )
+            )
 
 
 if __name__ == "__main__":
