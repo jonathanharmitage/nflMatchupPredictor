@@ -12,7 +12,6 @@ class Scraping:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-        # self.base_url = "https://www.pro-football-reference.com/teams/buf/2020.htm"
         self.base_url = "https://www.pro-football-reference.com"
 
     def feature_helper(self):
@@ -23,6 +22,19 @@ class Scraping:
             "Unnamed: 8_level_1": "home_away",
         }
         return feat_dt
+
+    def rename_features(self):
+        dt = {
+            "expected points_offense": "expected_points_offense",
+            "expected points_defense": "expected_points_defense",
+            "expected points_sp. tms": "expected_points_special_tms",
+        }
+
+        return dt
+
+    def win_loss_helper(self):
+        win_loss_dt = {"W": 1, "L": 0, "T": 0.5, "bye_week": 0}
+        return win_loss_dt
 
     def make_request(self, team_abbr, year):
         update_url = self.base_url + f"/teams/{team_abbr}/{year}.htm"
@@ -86,15 +98,20 @@ class Scraping:
         game_week_tbl["home_away"].fillna("home", inplace=True)
         game_week_tbl["home_away"] = game_week_tbl["home_away"].str.replace("@", "away")
         game_week_tbl.reset_index(drop=True, inplace=True)
-        game_week_tbl["season_source"] = "regular"
 
         game_week_tbl = pd.concat([game_week_tbl, bye_week_tbl], axis=0)
+        game_week_tbl["season_source"] = "regular"
+
         game_week_tbl["week"] = game_week_tbl["week"].astype(int)
         game_week_tbl.sort_values(["week"], ascending=True, inplace=True)
+        game_week_tbl["win_loss_as_int"] = game_week_tbl["win_loss"].map(
+            self.win_loss_helper()
+        )
 
         if len(check_idx) > 0:
             game_week_tbl = pd.concat([game_week_tbl, playoffs_tbl], axis=0)
 
+        game_week_tbl.rename(columns=self.rename_features(), inplace=True)
         game_week_tbl.reset_index(drop=True, inplace=True)
 
         return game_week_tbl
