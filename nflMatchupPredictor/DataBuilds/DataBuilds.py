@@ -3,7 +3,8 @@ from nflMatchupPredictor.Features.Features import Features
 
 
 class DataBuilds:
-    def __init__(self, verbose=False):
+    def __init__(self, week_nbr=None, verbose=False):
+        self.week_nbr = week_nbr
         self.verbose = verbose
 
     def home_away_helper(
@@ -33,14 +34,47 @@ class DataBuilds:
 
         return dt_
 
-    def filter_data(self, data_object):
+    def filter_to_regular(self, data_object):
         tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]
-        tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
+        if tmp_regular_season["week"].dtype == "O":
+            tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
+
+        # tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
         return tmp_regular_season
 
-    def determine_home_away_team(self, data_object, team, week_nbr):
+    def filter_to_week(self, data_object, is_exact=False):
+        # tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]
+        # tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
+        tmp_data_object = data_object.copy()
+        if "playoffs" in tmp_data_object["season_source"].tolist():
+            tmp_data_object = tmp_data_object.loc[
+                tmp_data_object["season_source"] != "playoffs"
+            ]
+
+        if tmp_data_object["week"].dtype == "O":
+            tmp_data_object["week"] = tmp_data_object["week"].astype(int)
+
+        if is_exact:
+            tmp_data_object = tmp_data_object.loc[
+                tmp_data_object["week"] == self.week_nbr
+            ]
+        else:
+            tmp_data_object = tmp_data_object.loc[
+                tmp_data_object["week"] <= self.week_nbr
+            ]
+
+        return tmp_data_object
+
+    def dot_filter_main(self, data_object, is_exact=False):
+        tmp_regular_season = self.filter_to_regular(data_object=data_object)
+        tmp_regular_season = self.filter_to_week(
+            data_object=tmp_regular_season, is_exact=is_exact
+        )
+        return tmp_regular_season
+
+    def determine_home_away_team(self, data_object, team):
         home_away = data_object.loc[
-            (data_object["nfl_team"] == team) & (data_object["week"] == week_nbr)
+            (data_object["nfl_team"] == team) & (data_object["week"] == self.week_nbr)
         ]
         if home_away["home_away"].iloc[0] == "home":
             home_team = team
@@ -101,21 +135,22 @@ class DataBuilds:
         # home_away_dt = {"home_team": home_team, "away_team": away_team}
         self.matchup_dt = final_dt
 
-        return final_dt
+        # return final_dt
 
-    def make_home_team_data(self, data_object, week_nbr):
+    def make_home_team_data(self, data_object):
         tmp_data_object = data_object.copy()
 
-        # home_team = home_away_team_dt.get("home_team")
         home_team = self.matchup_dt.get("home_team_abbrev")
         home_tbl = tmp_data_object.loc[
             (tmp_data_object["nfl_team"] == home_team)
-            & (tmp_data_object["week"] < week_nbr)
+            & (tmp_data_object["week"] < self.week_nbr)
         ]
+
+        home_tbl.reset_index(drop=True, inplace=True)
 
         return home_tbl
 
-    def make_away_team_data(self, data_object, week_nbr):
+    def make_away_team_data(self, data_object):
         tmp_data_object = data_object.copy()
 
         # away_team = home_away_team_dt.get("away_team")
@@ -123,8 +158,9 @@ class DataBuilds:
 
         away_tbl = tmp_data_object.loc[
             (tmp_data_object["nfl_team"] == away_team)
-            & (tmp_data_object["week"] < week_nbr)
+            & (tmp_data_object["week"] < self.week_nbr)
         ]
+        away_tbl.reset_index(drop=True, inplace=True)
 
         return away_tbl
 
@@ -148,6 +184,27 @@ class DataBuilds:
         upd_meta_tbl = tmp_data_object.loc[:, tmp_meta_features]
         upd_prod_tbl = tmp_data_object.loc[:, tmp_production_features]
 
+        for i in upd_prod_tbl.columns.tolist():
+            if upd_prod_tbl[i].dtype == "O":
+                upd_prod_tbl[i] = upd_prod_tbl[i].astype(float)
+
         return upd_meta_tbl, upd_prod_tbl
+
+    def produce_data_dot_main(self, data_object, team):
+        self.determine_home_away_team(data_object=data_object, team=team)
+        home_tbl = self.make_home_team_data(data_object=data_object)
+        home_meta_tbl, home_prod_tbl = self.produce_data_matrix(data_object=home_tbl)
+
+        away_tbl = self.make_away_team_data(data_object=data_object)
+        away_meta_tbl, away_prod_tbl = self.produce_data_matrix(data_object=away_tbl)
+
+        final_data_dt = {
+            "home_meta_tbl": home_meta_tbl,
+            "home_prod_tbl": home_prod_tbl,
+            "away_meta_tbl": away_meta_tbl,
+            "away_prod_tbl": away_prod_tbl,
+        }
+
+        return final_data_dt
 
     # def rename_
