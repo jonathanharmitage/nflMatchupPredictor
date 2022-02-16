@@ -1,10 +1,12 @@
-from nflMatchupPredictor.Adhoc.Adhoc import Adhoc
+# from nflMatchupPredictor.Adhoc.Adhoc import Adhoc
+from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 from nflMatchupPredictor.Features.Features import Features
 
 
 class DataBuilds:
     def __init__(self, week_nbr=None, verbose=False):
         self.week_nbr = week_nbr
+        self.abbrev_dt = DataLoader().load_abbrev_table()
         self.verbose = verbose
 
     def home_away_helper(
@@ -39,7 +41,6 @@ class DataBuilds:
         if tmp_regular_season["week"].dtype == "O":
             tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
 
-        # tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
         return tmp_regular_season
 
     def filter_to_week(self, data_object, is_exact=False):
@@ -78,9 +79,11 @@ class DataBuilds:
         ]
         if home_away["home_away"].iloc[0] == "home":
             home_team = team
-            home_team_abbrev = Adhoc().abbrev_tbl().get(home_team)
+            # home_team_abbrev = Adhoc().abbrev_tbl().get(home_team)
+            home_team_abbrev = self.abbrev_dt.get(home_team)
             away_team = home_away["opp"].iloc[0]
-            away_team_abbrev = Adhoc().abbrev_tbl().get(away_team)
+            # away_team_abbrev = Adhoc().abbrev_tbl().get(away_team)
+            away_team_abbrev = self.abbrev_dt.get(away_team)
             result = home_away["win_loss"].iloc[0]
 
             if result == "W":
@@ -102,10 +105,12 @@ class DataBuilds:
 
         else:
             home_team = home_away["opp"].iloc[0]
-            home_team_abbrev = Adhoc().abbrev_tbl().get(home_team)
+            # home_team_abbrev = Adhoc().abbrev_tbl().get(home_team)
+            home_team_abbrev = self.abbrev_dt.get(home_team)
 
             away_team = team
-            away_team_abbrev = Adhoc().abbrev_tbl().get(away_team)
+            # away_team_abbrev = Adhoc().abbrev_tbl().get(away_team)
+            away_team_abbrev = self.abbrev_dt.get(away_team)
 
             result = home_away["win_loss"].iloc[0]
             if result == "W":

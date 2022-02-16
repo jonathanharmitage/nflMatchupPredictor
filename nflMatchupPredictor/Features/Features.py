@@ -10,6 +10,8 @@ class Features:
     def meta_features(self, team=None):
         meta_features = [
             "nfl_team",
+            "nfl_team_abbrev",
+            "nfl_team_name",
             "nfl_season",
             "season_source",
             "week",
@@ -25,6 +27,10 @@ class Features:
             "rec",
             "home_away",
             "opp",
+            "opp_name",
+            "opp_abbrev",
+            "winning_team",
+            "winning_team_equals_home_team",
             "expected_points_offense",
             "expected_points_defense",
             "expected_points_special_tms",
