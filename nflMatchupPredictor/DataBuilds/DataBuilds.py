@@ -1,4 +1,6 @@
 # from nflMatchupPredictor.Adhoc.Adhoc import Adhoc
+import pandas as pd
+
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 from nflMatchupPredictor.Features.Features import Features
 
@@ -38,10 +40,99 @@ class DataBuilds:
 
     def filter_to_regular(self, data_object):
         tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]
+        tmp_regular_season = tmp_regular_season.loc[
+            tmp_regular_season["score_tm"] != "bye_week"
+        ]
+
         if tmp_regular_season["week"].dtype == "O":
             tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
 
+        all_prod_ = self.features_need().get("all_prod")
+        for i in all_prod_:
+            if tmp_regular_season[i].dtype == "O":
+                tmp_regular_season[i] = tmp_regular_season[i].astype(float)
+
         return tmp_regular_season
+
+    def truncate_schedule(self, data_schedule):
+        cols = ["week", "home_team_name", "away_team_name", "home_team_wins"]
+        tmp_schedule = data_schedule.loc[:, cols]
+        tmp_schedule["home_team_abbrev"] = tmp_schedule["home_team_name"].map(
+            self.abbrev_dt
+        )
+        tmp_schedule["away_team_abbrev"] = tmp_schedule["away_team_name"].map(
+            self.abbrev_dt
+        )
+
+        return tmp_schedule
+
+    def features_need(self):
+        meta_ = ["nfl_season", "week", "nfl_team"]
+        score_ = ["score_tm", "score_opp"]
+        offense_ = [
+            "offense_1std",
+            "offense_totyd",
+            "offense_passy",
+            "offense_rushy",
+            "offense_to",
+        ]
+        defense_ = [
+            "defense_1std",
+            "defense_totyd",
+            "defense_passy",
+            "defense_rushy",
+            "defense_to",
+        ]
+
+        dt = {
+            "all_need": meta_ + score_ + offense_ + defense_,
+            "all_prod": score_ + offense_ + defense_,
+        }
+
+        return dt
+
+    def design_matrix_by_week(self, data_schedule, data_prod, week):
+        tmp_schedule = data_schedule.copy()
+        # week3_upd == data_schedule
+        tmp_prod = data_prod.copy()
+        # s2020 == data_prod
+
+        all_need_ = self.features_need().get("all_need")
+        all_prod_ = self.features_need().get("all_prod")
+
+        hld_df = pd.DataFrame()
+        for i in range(tmp_schedule.shape[0]):
+            h_ = tmp_schedule["home_team_abbrev"].iloc[i]
+            a_ = tmp_schedule["away_team_abbrev"].iloc[i]
+
+            h_w1w2 = tmp_prod.loc[
+                (tmp_prod["nfl_team"] == h_) & (tmp_prod["week"] < week), all_need_
+            ]
+            a_w1w2 = tmp_prod.loc[
+                (tmp_prod["nfl_team"] == a_) & (tmp_prod["week"] < week), all_need_
+            ]
+
+            # Home team data
+            h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
+            h_agg_w1w2.columns = [c + "_home_team" for c in h_agg_w1w2]
+            h_agg_w1w2["home_team_name_abbrev"] = h_
+            h_agg_w1w2["through_week"] = "through_week_" + str(week - 1)
+
+            # Away team data
+            a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
+            a_agg_w1w2.columns = [c + "_away_team" for c in a_agg_w1w2]
+            a_agg_w1w2["away_team_name_abbrev"] = a_
+            a_agg_w1w2["through_week"] = "through_week_" + str(week - 1)
+
+            h_vs_a_w3 = pd.concat([h_agg_w1w2, a_agg_w1w2], axis=1)
+
+            w_upd = tmp_schedule.iloc[i : i + 1, :]
+            w_upd.reset_index(drop=True, inplace=True)
+
+            final_h_vs_a_w3 = pd.concat([w_upd, h_vs_a_w3], axis=1)
+            hld_df = hld_df.append(final_h_vs_a_w3)
+
+        return hld_df
 
     def filter_to_week(self, data_object, is_exact=False):
         # tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]

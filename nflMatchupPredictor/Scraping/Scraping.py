@@ -220,12 +220,23 @@ class Scraping:
             get_schedule_tbl["home_team_name"] == get_schedule_tbl["winner_tie"], 1, 0
         )
 
-        find_away_team = self.counter_helper(data_object=get_schedule_tbl)
-        get_schedule_tbl["away_team_name"] = find_away_team
-        get_schedule_tbl["nfl_season"] = self.nfl_year
-        get_schedule_tbl.columns = get_schedule_tbl.columns.str.lower()
+        get_schedule_tbl.reset_index(drop=True, inplace=True)
 
-        return get_schedule_tbl
+        find_away_team = self.counter_helper(data_object=get_schedule_tbl)
+        if len(find_away_team) != len(get_schedule_tbl):
+            return get_schedule_tbl, find_away_team
+        else:
+            get_schedule_tbl["away_team_name"] = find_away_team
+            get_schedule_tbl["nfl_season"] = self.nfl_year
+            get_schedule_tbl.columns = get_schedule_tbl.columns.str.lower()
+
+            return get_schedule_tbl
+
+        # get_schedule_tbl["away_team_name"] = find_away_team
+        # get_schedule_tbl["nfl_season"] = self.nfl_year
+        # get_schedule_tbl.columns = get_schedule_tbl.columns.str.lower()
+
+        # return get_schedule_tbl
 
     def scrape_dot_main(self, team_abbr):
         soup = self.make_soup(team_abbr=team_abbr)
