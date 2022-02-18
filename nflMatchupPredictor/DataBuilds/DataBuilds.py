@@ -1,8 +1,12 @@
 # from nflMatchupPredictor.Adhoc.Adhoc import Adhoc
+import warnings
+
 import pandas as pd
 
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 from nflMatchupPredictor.Features.Features import Features
+
+warnings.simplefilter("ignore")
 
 
 class DataBuilds:
@@ -84,15 +88,36 @@ class DataBuilds:
             "defense_to",
         ]
 
+        diffs_ = [
+            "score_diff_home_team",
+            "scored_more_than_opp_home_team",
+            "score_diff_away_team",
+            "scored_more_than_opp_away_team",
+            "turnover_diff_home_team",
+            "turnover_diff_binary_home_team",
+            "turnover_diff_away_team",
+            "turnover_diff_binary_away_team",
+            "offense_totyd_diff_home_vs_away",
+            "defense_totyd_diff_home_vs_away",
+        ]
+
         dt = {
             "all_need": meta_ + score_ + offense_ + defense_,
             "all_prod": score_ + offense_ + defense_,
+            "diff_prod": diffs_,
         }
 
         return dt
 
-    def design_matrix_by_week(self, data_schedule, data_prod, week):
-        tmp_schedule = data_schedule.copy()
+    def filter_and_truncate(self, data_schedule, data_prod):
+        trunc_schedule = self.truncate_schedule(data_schedule=data_schedule)
+        prod_regular = self.filter_to_regular(data_object=data_prod)
+        return trunc_schedule, prod_regular
+
+    def design_matrix_by_week(self, data_schedule, data_prod, week, mean_prod=False):
+        # tmp_schedule = data_schedule.copy()
+        tmp_schedule = data_schedule.loc[data_schedule["week"] == str(week)]
+        tmp_schedule.reset_index(drop=True, inplace=True)
         # week3_upd == data_schedule
         tmp_prod = data_prod.copy()
         # s2020 == data_prod
@@ -113,16 +138,30 @@ class DataBuilds:
             ]
 
             # Home team data
-            h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
+            # h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
+            if mean_prod:
+                h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].mean()).T
+                agg_type = "mean"
+            else:
+                h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
+                agg_type = "sum"
+
             h_agg_w1w2.columns = [c + "_home_team" for c in h_agg_w1w2]
             h_agg_w1w2["home_team_name_abbrev"] = h_
-            h_agg_w1w2["through_week"] = "through_week_" + str(week - 1)
+            h_agg_w1w2["data_through_week_home"] = "through_week_" + str(week - 1)
 
             # Away team data
-            a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
+            # a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
+            if mean_prod:
+                a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].mean()).T
+                agg_type = "mean"
+            else:
+                a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
+                agg_type = "sum"
+
             a_agg_w1w2.columns = [c + "_away_team" for c in a_agg_w1w2]
             a_agg_w1w2["away_team_name_abbrev"] = a_
-            a_agg_w1w2["through_week"] = "through_week_" + str(week - 1)
+            a_agg_w1w2["data_through_week_away"] = "through_week_" + str(week - 1)
 
             h_vs_a_w3 = pd.concat([h_agg_w1w2, a_agg_w1w2], axis=1)
 
@@ -130,7 +169,49 @@ class DataBuilds:
             w_upd.reset_index(drop=True, inplace=True)
 
             final_h_vs_a_w3 = pd.concat([w_upd, h_vs_a_w3], axis=1)
+            final_h_vs_a_w3["predicting_for_week"] = "predicting_for_week_" + str(week)
+            final_h_vs_a_w3["agg_type"] = agg_type
+
             hld_df = hld_df.append(final_h_vs_a_w3)
+
+        return hld_df
+
+    def design_dot_main(self, data_schedule, data_prod, week, mean_prod=False):
+        design_matrix = self.design_matrix_by_week(
+            data_schedule=data_schedule,
+            data_prod=data_prod,
+            week=week,
+            mean_prod=mean_prod,
+        )
+        # design_matrix = Features().make_score_diff(data_object=design_matrix)
+        design_matrix = Features().features_dot_main(data_object=design_matrix)
+        return design_matrix
+
+    def design_train_iter_dot_main(
+        self, data_schedule, data_prod, min_week=2, max_week=None, mean_prod=False
+    ):
+        if max_week is None:
+            max_weeks = data_prod["week"].max()
+            iter_range = range(min_week, max_weeks + 1)
+        elif (type(max_week) is int) and (max_week > 17):
+            iter_range = range(min_week, (17 + 1))
+        elif type(max_week) is int:
+            iter_range = range(min_week, max_week + 1)
+
+        print(f"\n-- Training data for {list(iter_range)[-1] - 1} weeks --\n")
+        # print("\n-- Note: training data does not include week 1 --\n")
+
+        hld_df = pd.DataFrame()
+        for w in iter_range:
+            tmp_design = self.design_dot_main(
+                data_schedule=data_schedule,
+                data_prod=data_prod,
+                week=w,
+                mean_prod=mean_prod,
+            )
+            hld_df = hld_df.append(tmp_design)
+            if self.verbose:
+                print(f"\n-- Week Complete: {w} --\n")
 
         return hld_df
 

@@ -1,18 +1,38 @@
+import os
+
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
 
 
 class DataLoader:
     def __init__(self, verbose=False):
         self.verbose = verbose
 
-    def load_data_by_year(self, nfl_year):
-        abbrev_data_name = "/Users/jonathanarmitage/Documents/dt-internal-projects/nfl-matchup-predictor/data/raw/start{}.csv"
-        data = pd.read_csv(abbrev_data_name.format(nfl_year))
+        load_dotenv()
+        self.local_data_raw_dir = os.getenv("LOCAL_RAW_DATA_DIR")
+
+    def load_data_by_year(self, nfl_year, prod=True):
+        # abbrev_data_name = "/Users/jonathanarmitage/Documents/dt-internal-projects/nfl-matchup-predictor/data/raw/start{}.csv"
+        if prod:
+            file_name = "/start{}.csv".format(nfl_year)
+            for_verbose = "production"
+        else:
+            file_name = "/schedule{}.csv".format(nfl_year)
+            for_verbose = "schedule"
+
+        full_path = self.local_data_raw_dir + file_name
+        data = pd.read_csv(full_path)
+
+        if self.verbose:
+            print(
+                f"\n-- Data Source: {for_verbose} | Year: {nfl_year} | Rows: {data.shape[0]} --\n"
+            )
         return data
 
     def load_abbrev_table(self):
-        abbrev_data_name = "/Users/jonathanarmitage/Documents/dt-internal-projects/nfl-matchup-predictor/data/raw/tm_abbrev.csv"
+        # abbrev_data_name = "/Users/jonathanarmitage/Documents/dt-internal-projects/nfl-matchup-predictor/data/raw/tm_abbrev.csv"
+        abbrev_data_name = self.local_data_raw_dir + "/tm_abbrev.csv"
         abbrev_data = pd.read_csv(abbrev_data_name)
         to_dt = dict(zip(abbrev_data["team_name_a"], abbrev_data["team_name_b"]))
         return to_dt
