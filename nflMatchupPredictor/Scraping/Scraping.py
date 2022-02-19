@@ -60,22 +60,56 @@ class Scraping:
         return win_loss_dt
 
     def make_request(self, team_abbr=None):
+        """
+        Request website
+
+        Parameters
+        ----------
+        team_abbr : str, optional
+            _description_, by default None
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if team_abbr:
-            # update_url = self.base_url + f"/teams/{team_abbr}/{self.nfl_year}.htm"
-            update_url = self.base_url + self.finish_url().get("by_team").format(
-                self.nfl_year
-            )
+            update_url = self.base_url + self.finish_url().get("by_team").format(self.nfl_year)
         else:
-            update_url = self.base_url + self.finish_url().get("by_schedule").format(
-                self.nfl_year
-            )
+            update_url = self.base_url + self.finish_url().get("by_schedule").format(self.nfl_year)
         return requests.get(update_url)
 
     def make_soup(self, team_abbr=None):
+        """
+        Instantiate a BeautifulSoup object
+
+        Parameters
+        ----------
+        team_abbr : str, optional
+            _description_, by default None
+
+        Returns
+        -------
+        BeautifulSoup object
+            _description_
+        """
         req = self.make_request(team_abbr=team_abbr)
         return BeautifulSoup(req.content, "lxml")
 
     def get_boxscore_url(self, soup_object):
+        """
+        Parse boxscore link.
+
+        Parameters
+        ----------
+        soup_object : BeautifulSoup object
+            _description_
+
+        Returns
+        -------
+        list
+            _description_
+        """
         td_center = soup_object.select("td.center")
 
         bx = []
@@ -98,6 +132,19 @@ class Scraping:
         return tm_abbrev
 
     def get_schedule(self, soup_object):
+        """
+        Fetch NFL schedule data.
+
+        Parameters
+        ----------
+        soup_object : BeautifulSoup object
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         html_table = soup_object.select("table#games")[0]
         html_to_df = pd.read_html(str(html_table))[0]
         html_to_df = html_to_df.loc[html_to_df["Week"] != "Week"]
@@ -181,9 +228,7 @@ class Scraping:
 
         game_week_tbl["week"] = game_week_tbl["week"].astype(int)
         game_week_tbl.sort_values(["week"], ascending=True, inplace=True)
-        game_week_tbl["win_loss_as_int"] = game_week_tbl["win_loss"].map(
-            self.win_loss_helper()
-        )
+        game_week_tbl["win_loss_as_int"] = game_week_tbl["win_loss"].map(self.win_loss_helper())
 
         if len(check_idx) > 0:
             game_week_tbl = pd.concat([game_week_tbl, playoffs_tbl], axis=0)
@@ -194,6 +239,19 @@ class Scraping:
         return game_week_tbl
 
     def scrape_schedule_dot_main(self, team_abbr=None):
+        """
+        scrape_schedule_dot_main Wrapper that encapsulates the necessary logic to fetch an NFL schedule(s)
+
+        Parameters
+        ----------
+        team_abbr : str, optional
+            _description_, by default None
+
+        Returns
+        -------
+        DataFrame
+            _description_
+        """
         soup = self.make_soup(team_abbr=team_abbr)
         get_tm_abbrev = self.get_boxscore_url(soup_object=soup)
         get_schedule_tbl = self.get_schedule(soup_object=soup)
@@ -203,13 +261,9 @@ class Scraping:
 
         abbrev_tbl = DataLoader().load_abbrev_table()
 
-        get_schedule_tbl["winner_abbrev"] = get_schedule_tbl["winner_tie"].map(
-            abbrev_tbl
-        )
+        get_schedule_tbl["winner_abbrev"] = get_schedule_tbl["winner_tie"].map(abbrev_tbl)
         get_schedule_tbl["loser_abbrev"] = get_schedule_tbl["loser_tie"].map(abbrev_tbl)
-        get_schedule_tbl["home_team_name"] = get_schedule_tbl["home_team"].map(
-            abbrev_tbl
-        )
+        get_schedule_tbl["home_team_name"] = get_schedule_tbl["home_team"].map(abbrev_tbl)
 
         get_schedule_tbl["winner_home_away"] = np.where(
             get_schedule_tbl["home_team_name"] == get_schedule_tbl["winner_tie"],
@@ -231,12 +285,6 @@ class Scraping:
             get_schedule_tbl.columns = get_schedule_tbl.columns.str.lower()
 
             return get_schedule_tbl
-
-        # get_schedule_tbl["away_team_name"] = find_away_team
-        # get_schedule_tbl["nfl_season"] = self.nfl_year
-        # get_schedule_tbl.columns = get_schedule_tbl.columns.str.lower()
-
-        # return get_schedule_tbl
 
     def scrape_dot_main(self, team_abbr):
         soup = self.make_soup(team_abbr=team_abbr)

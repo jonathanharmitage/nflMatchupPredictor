@@ -1,6 +1,5 @@
 import os
 
-import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -12,9 +11,23 @@ class DataLoader:
         load_dotenv()
         self.local_data_raw_dir = os.getenv("LOCAL_RAW_DATA_DIR")
 
-    def load_data_by_year(self, nfl_year, prod=True):
-        # abbrev_data_name = "/Users/jonathanarmitage/Documents/dt-internal-projects/nfl-matchup-predictor/data/raw/start{}.csv"
-        if prod:
+    def load_data_by_year(self, nfl_year, production=True):
+        """
+        Load relevant raw data.
+
+        Parameters
+        ----------
+        nfl_year : int
+            _description_
+        production : bool, optional
+            _description_, by default True
+
+        Returns
+        -------
+        DataFrame
+            _description_
+        """
+        if production:
             file_name = "/start{}.csv".format(nfl_year)
             for_verbose = "production"
         else:
@@ -22,52 +35,24 @@ class DataLoader:
             for_verbose = "schedule"
 
         full_path = self.local_data_raw_dir + file_name
-        data = pd.read_csv(full_path)
+        data_tbl = pd.read_csv(full_path)
 
         if self.verbose:
-            print(
-                f"\n-- Data Source: {for_verbose} | Year: {nfl_year} | Rows: {data.shape[0]} --\n"
-            )
-        return data
+            print(f"\n-- Data Source: {for_verbose} | Year: {nfl_year} | Rows: {data_tbl.shape[0]} --\n")
+
+        return data_tbl
 
     def load_abbrev_table(self):
-        # abbrev_data_name = "/Users/jonathanarmitage/Documents/dt-internal-projects/nfl-matchup-predictor/data/raw/tm_abbrev.csv"
+        """
+        Load NFL team abbrevations.
+
+        Returns
+        -------
+        dict
+            _description_
+        """
         abbrev_data_name = self.local_data_raw_dir + "/tm_abbrev.csv"
         abbrev_data = pd.read_csv(abbrev_data_name)
         to_dt = dict(zip(abbrev_data["team_name_a"], abbrev_data["team_name_b"]))
+
         return to_dt
-
-    def dot_main_load_data(self, nfl_year):
-        abbrev_dt = self.load_abbrev_table()
-        data_tbl = self.load_data_by_year(nfl_year=nfl_year)
-        data_tbl.rename(
-            columns={"nfl_team": "nfl_team_abbrev", "opp": "opp_name"}, inplace=True
-        )
-
-        data_tbl["opp_abbrev"] = data_tbl["opp_name"].map(abbrev_dt)
-        data_tbl["nfl_team_name"] = data_tbl["nfl_team_abbrev"].map(abbrev_dt)
-
-        data_tbl["home_team_equals"] = np.where(
-            data_tbl["home_away"] == "home",
-            data_tbl["nfl_team_abbrev"],
-            data_tbl["opp_abbrev"],
-        )
-
-        data_tbl["away_team_equals"] = np.where(
-            data_tbl["home_away"] == "home",
-            data_tbl["opp_abbrev"],
-            data_tbl["nfl_team_abbrev"],
-        )
-
-        data_tbl["source_data"] = data_tbl["nfl_team_name"]
-        data_tbl["winning_team"] = np.where(
-            data_tbl["win_loss"] == "W",
-            data_tbl["nfl_team_abbrev"],
-            data_tbl["opp_abbrev"],
-        )
-
-        data_tbl["winning_team_equals_home_team"] = np.where(
-            data_tbl["home_team_equals"] == data_tbl["winning_team"], "yes", "no"
-        )
-
-        return data_tbl

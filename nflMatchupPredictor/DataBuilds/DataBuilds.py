@@ -15,38 +15,22 @@ class DataBuilds:
         self.abbrev_dt = DataLoader().load_abbrev_table()
         self.verbose = verbose
 
-    def home_away_helper(
-        self, home_team, home_team_abbrev, away_team, away_team_abbrev
-    ):
-        if len(home_team) <= 4:
-            full_home_team_name = home_team_abbrev
-            abbrev_home = home_team
-
-        else:
-            full_home_team_name = home_team
-            abbrev_home = home_team_abbrev
-
-        if len(away_team) <= 4:
-            full_away_team_name = away_team_abbrev
-            abbrev_away = away_team
-        else:
-            full_away_team_name = away_team
-            abbrev_away = away_team_abbrev
-
-        dt_ = {
-            "home_team": full_home_team_name,
-            "home_team_abbrev": abbrev_home,
-            "away_team": full_away_team_name,
-            "away_team_abbrev": abbrev_away,
-        }
-
-        return dt_
-
     def filter_to_regular(self, data_object):
+        """
+        Filter data to include only games that occurred in the regular season.
+
+        Parameters
+        ----------
+        data_object : DataFrame
+            Raw NFL game data
+
+        Returns
+        -------
+        DataFrame
+            NFL game data filtered to include only games that occurred in the regular season
+        """
         tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]
-        tmp_regular_season = tmp_regular_season.loc[
-            tmp_regular_season["score_tm"] != "bye_week"
-        ]
+        tmp_regular_season = tmp_regular_season.loc[tmp_regular_season["score_tm"] != "bye_week"]
 
         if tmp_regular_season["week"].dtype == "O":
             tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
@@ -59,18 +43,35 @@ class DataBuilds:
         return tmp_regular_season
 
     def truncate_schedule(self, data_schedule):
+        """
+        Trim NFL schedule data to include relevant columns.
+
+        Parameters
+        ----------
+        data_schedule : DataFrame
+            Raw NFL schedule data
+
+        Returns
+        -------
+        DataFrame
+            NFL schedule data truncated to include only relevant columns.
+
+        """
         cols = ["week", "home_team_name", "away_team_name", "home_team_wins"]
         tmp_schedule = data_schedule.loc[:, cols]
-        tmp_schedule["home_team_abbrev"] = tmp_schedule["home_team_name"].map(
-            self.abbrev_dt
-        )
-        tmp_schedule["away_team_abbrev"] = tmp_schedule["away_team_name"].map(
-            self.abbrev_dt
-        )
+        tmp_schedule["home_team_abbrev"] = tmp_schedule["home_team_name"].map(self.abbrev_dt)
+        tmp_schedule["away_team_abbrev"] = tmp_schedule["away_team_name"].map(self.abbrev_dt)
 
         return tmp_schedule
 
     def features_need(self):
+        """
+        Relevant features to be utilized for downstream tasks.
+
+        Returns
+        -------
+        dict
+        """
         meta_ = ["nfl_season", "week", "nfl_team"]
         score_ = ["score_tm", "score_opp"]
         offense_ = [
@@ -109,17 +110,60 @@ class DataBuilds:
 
         return dt
 
-    def filter_and_truncate(self, data_schedule, data_prod):
-        trunc_schedule = self.truncate_schedule(data_schedule=data_schedule)
-        prod_regular = self.filter_to_regular(data_object=data_prod)
-        return trunc_schedule, prod_regular
+    def filter_and_truncate(self, data_schedule, data_production):
+        """
+        Wrapper that first filters relevant NFL production data and then
+        truncates NFL schedule data.
 
-    def design_matrix_by_week(self, data_schedule, data_prod, week, mean_prod=False):
+        Parameters
+        ----------
+        data_schedule : DataFrame
+            _description_
+        data_production : DataFrame
+            _description_
+
+        Returns
+        -------
+        DataFrame
+            NFL game data filtered to include only games that occurred in the regular season
+
+        DataFrame
+            NFL schedule data truncated to include only relevant columns.
+        """
+        prod_regular = self.filter_to_regular(data_object=data_production)
+        trunc_schedule = self.truncate_schedule(data_schedule=data_schedule)
+
+        return prod_regular, trunc_schedule
+
+    def design_matrix_by_week(self, data_schedule, data_production, week, mean_prod=False):
+        """
+        Generate a design matrix that can be partitioned into train and test sets.
+
+        Parameters
+        ----------
+        data_schedule : DataFrame
+            _description_
+        data_production : DataFrame
+            _description_
+        week : int
+            Represents the week of the NFL season that predictions are to be made.
+        mean_prod : bool, optional
+            If True production metrics are aggregated by taking the mean, else aggregation is accomplished via summing over all relevant values, by default False.
+
+        Returns
+        -------
+        DataFrame
+            Dataset where all production metrics are aggregated up to (but not including) `week`
+
+        Todo
+        ----
+        Better naming
+        """
         # tmp_schedule = data_schedule.copy()
         tmp_schedule = data_schedule.loc[data_schedule["week"] == str(week)]
         tmp_schedule.reset_index(drop=True, inplace=True)
         # week3_upd == data_schedule
-        tmp_prod = data_prod.copy()
+        tmp_prod = data_production.copy()
         # s2020 == data_prod
 
         all_need_ = self.features_need().get("all_need")
@@ -130,15 +174,10 @@ class DataBuilds:
             h_ = tmp_schedule["home_team_abbrev"].iloc[i]
             a_ = tmp_schedule["away_team_abbrev"].iloc[i]
 
-            h_w1w2 = tmp_prod.loc[
-                (tmp_prod["nfl_team"] == h_) & (tmp_prod["week"] < week), all_need_
-            ]
-            a_w1w2 = tmp_prod.loc[
-                (tmp_prod["nfl_team"] == a_) & (tmp_prod["week"] < week), all_need_
-            ]
+            h_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == h_) & (tmp_prod["week"] < week), all_need_]
+            a_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == a_) & (tmp_prod["week"] < week), all_need_]
 
             # Home team data
-            # h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
             if mean_prod:
                 h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].mean()).T
                 agg_type = "mean"
@@ -151,7 +190,6 @@ class DataBuilds:
             h_agg_w1w2["data_through_week_home"] = "through_week_" + str(week - 1)
 
             # Away team data
-            # a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
             if mean_prod:
                 a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].mean()).T
                 agg_type = "mean"
@@ -176,22 +214,61 @@ class DataBuilds:
 
         return hld_df
 
-    def design_dot_main(self, data_schedule, data_prod, week, mean_prod=False):
+    def design_dot_main(self, data_schedule, data_production, week, mean_prod=False):
+        """
+        Wrapper that encapsulates the necessary logic to generate one week of NFL data that is temporally correct.
+
+        Parameters
+        ----------
+        data_schedule : DataFrame
+            _description_
+        data_production : DataFrame
+            _description_
+        week : _type_
+            _description_
+        mean_prod : bool, optional
+            _description_, by default False
+
+        Returns
+        -------
+        DataFrame
+            _description_
+        """
         design_matrix = self.design_matrix_by_week(
             data_schedule=data_schedule,
-            data_prod=data_prod,
+            data_production=data_production,
             week=week,
             mean_prod=mean_prod,
         )
-        # design_matrix = Features().make_score_diff(data_object=design_matrix)
+
         design_matrix = Features().features_dot_main(data_object=design_matrix)
+
         return design_matrix
 
-    def design_train_iter_dot_main(
-        self, data_schedule, data_prod, min_week=2, max_week=None, mean_prod=False
-    ):
+    def design_train_iter_dot_main(self, data_schedule, data_production, min_week=2, max_week=None, mean_prod=False):
+        """
+        Wrapper that encapsulates the neccessary method(s) to generate many weeks of training data
+
+        Parameters
+        ----------
+        data_schedule : DataFrame
+            _description_
+        data_production : DataFrame
+            _description_
+        min_week : int, optional
+            _description_, by default 2
+        max_week : _type_, optional
+            _description_, by default None
+        mean_prod : bool, optional
+            _description_, by default False
+
+        Returns
+        -------
+        DataFrame
+            _description_
+        """
         if max_week is None:
-            max_weeks = data_prod["week"].max()
+            max_weeks = data_production["week"].max()
             iter_range = range(min_week, max_weeks + 1)
         elif (type(max_week) is int) and (max_week > 17):
             iter_range = range(min_week, (17 + 1))
@@ -199,189 +276,18 @@ class DataBuilds:
             iter_range = range(min_week, max_week + 1)
 
         print(f"\n-- Training data for {list(iter_range)[-1] - 1} weeks --\n")
-        # print("\n-- Note: training data does not include week 1 --\n")
 
         hld_df = pd.DataFrame()
         for w in iter_range:
             tmp_design = self.design_dot_main(
                 data_schedule=data_schedule,
-                data_prod=data_prod,
+                data_production=data_production,
                 week=w,
                 mean_prod=mean_prod,
             )
             hld_df = hld_df.append(tmp_design)
+
             if self.verbose:
                 print(f"\n-- Week Complete: {w} --\n")
 
         return hld_df
-
-    def filter_to_week(self, data_object, is_exact=False):
-        # tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]
-        # tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
-        tmp_data_object = data_object.copy()
-        if "playoffs" in tmp_data_object["season_source"].tolist():
-            tmp_data_object = tmp_data_object.loc[
-                tmp_data_object["season_source"] != "playoffs"
-            ]
-
-        if tmp_data_object["week"].dtype == "O":
-            tmp_data_object["week"] = tmp_data_object["week"].astype(int)
-
-        if is_exact:
-            tmp_data_object = tmp_data_object.loc[
-                tmp_data_object["week"] == self.week_nbr
-            ]
-        else:
-            tmp_data_object = tmp_data_object.loc[
-                tmp_data_object["week"] <= self.week_nbr
-            ]
-
-        return tmp_data_object
-
-    def dot_filter_main(self, data_object, is_exact=False):
-        tmp_regular_season = self.filter_to_regular(data_object=data_object)
-        tmp_regular_season = self.filter_to_week(
-            data_object=tmp_regular_season, is_exact=is_exact
-        )
-        return tmp_regular_season
-
-    def determine_home_away_team(self, data_object, team):
-        home_away = data_object.loc[
-            (data_object["nfl_team"] == team) & (data_object["week"] == self.week_nbr)
-        ]
-        if home_away["home_away"].iloc[0] == "home":
-            home_team = team
-            # home_team_abbrev = Adhoc().abbrev_tbl().get(home_team)
-            home_team_abbrev = self.abbrev_dt.get(home_team)
-            away_team = home_away["opp"].iloc[0]
-            # away_team_abbrev = Adhoc().abbrev_tbl().get(away_team)
-            away_team_abbrev = self.abbrev_dt.get(away_team)
-            result = home_away["win_loss"].iloc[0]
-
-            if result == "W":
-                res = team + " is home team and won"
-                winner = "home_team"
-            else:
-                res = team + " is home team and lost"
-                winner = "away_team"
-
-            final_dt = self.home_away_helper(
-                home_team=home_team,
-                home_team_abbrev=home_team_abbrev,
-                away_team=away_team,
-                away_team_abbrev=away_team_abbrev,
-            )
-
-            final_dt["winner"] = winner
-            final_dt["result"] = res
-
-        else:
-            home_team = home_away["opp"].iloc[0]
-            # home_team_abbrev = Adhoc().abbrev_tbl().get(home_team)
-            home_team_abbrev = self.abbrev_dt.get(home_team)
-
-            away_team = team
-            # away_team_abbrev = Adhoc().abbrev_tbl().get(away_team)
-            away_team_abbrev = self.abbrev_dt.get(away_team)
-
-            result = home_away["win_loss"].iloc[0]
-            if result == "W":
-                res = team + " is away team and won"
-                winner = "away_team"
-
-            else:
-                res = team + " is away team and lost"
-                winner = "home_team"
-
-            final_dt = self.home_away_helper(
-                home_team=home_team,
-                home_team_abbrev=home_team_abbrev,
-                away_team=away_team,
-                away_team_abbrev=away_team_abbrev,
-            )
-
-            final_dt["winner"] = winner
-            final_dt["result"] = res
-
-        # if Adhoc().abbrev_tbl().get(home_team) is not None:
-        #     home_team = Adhoc().abbrev_tbl().get(home_team)
-
-        # if Adhoc().abbrev_tbl().get(away_team) is not None:
-        #     away_team = Adhoc().abbrev_tbl().get(away_team)
-
-        # home_away_dt = {"home_team": home_team, "away_team": away_team}
-        self.matchup_dt = final_dt
-
-        # return final_dt
-
-    def make_home_team_data(self, data_object):
-        tmp_data_object = data_object.copy()
-
-        home_team = self.matchup_dt.get("home_team_abbrev")
-        home_tbl = tmp_data_object.loc[
-            (tmp_data_object["nfl_team"] == home_team)
-            & (tmp_data_object["week"] < self.week_nbr)
-        ]
-
-        home_tbl.reset_index(drop=True, inplace=True)
-
-        return home_tbl
-
-    def make_away_team_data(self, data_object):
-        tmp_data_object = data_object.copy()
-
-        # away_team = home_away_team_dt.get("away_team")
-        away_team = self.matchup_dt.get("away_team_abbrev")
-
-        away_tbl = tmp_data_object.loc[
-            (tmp_data_object["nfl_team"] == away_team)
-            & (tmp_data_object["week"] < self.week_nbr)
-        ]
-        away_tbl.reset_index(drop=True, inplace=True)
-
-        return away_tbl
-
-    def produce_features(self, team=None):
-        tmp_meta_features = Features().meta_features(team=team)
-        tmp_production_features = Features().production_features(team=team)
-        return tmp_meta_features, tmp_production_features
-
-    def produce_data_matrix(self, data_object):
-        nfl_team = data_object["nfl_team"].unique()[0]
-        rev_ha_dt = {v: k for k, v in self.matchup_dt.items()}
-        lkup_home_away = rev_ha_dt.get(nfl_team)
-        suffix = nfl_team + "_is_" + lkup_home_away.replace("_abbrev", "")
-
-        tmp_meta_features, tmp_production_features = self.produce_features(team=suffix)
-
-        tmp_data_object = data_object.copy()
-        upd_data_cols = [i + "_" + suffix for i in tmp_data_object.columns]
-        tmp_data_object.columns = upd_data_cols
-
-        upd_meta_tbl = tmp_data_object.loc[:, tmp_meta_features]
-        upd_prod_tbl = tmp_data_object.loc[:, tmp_production_features]
-
-        for i in upd_prod_tbl.columns.tolist():
-            if upd_prod_tbl[i].dtype == "O":
-                upd_prod_tbl[i] = upd_prod_tbl[i].astype(float)
-
-        return upd_meta_tbl, upd_prod_tbl
-
-    def produce_data_dot_main(self, data_object, team):
-        self.determine_home_away_team(data_object=data_object, team=team)
-        home_tbl = self.make_home_team_data(data_object=data_object)
-        home_meta_tbl, home_prod_tbl = self.produce_data_matrix(data_object=home_tbl)
-
-        away_tbl = self.make_away_team_data(data_object=data_object)
-        away_meta_tbl, away_prod_tbl = self.produce_data_matrix(data_object=away_tbl)
-
-        final_data_dt = {
-            "home_meta_tbl": home_meta_tbl,
-            "home_prod_tbl": home_prod_tbl,
-            "away_meta_tbl": away_meta_tbl,
-            "away_prod_tbl": away_prod_tbl,
-        }
-
-        return final_data_dt
-
-    # def rename_

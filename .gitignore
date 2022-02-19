@@ -318,5 +318,6 @@ DataRepo/Processed
 README.rst
 AUTHORS.rst
 CHANGELOG.rst
+Scratches/
 
 # End of https://www.toptal.com/developers/gitignore/api/osx,python,visualstudiocode,pycharm
