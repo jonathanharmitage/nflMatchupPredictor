@@ -10,8 +10,7 @@ warnings.simplefilter("ignore")
 
 
 class DataBuilds:
-    def __init__(self, week_nbr=None, verbose=False):
-        self.week_nbr = week_nbr
+    def __init__(self, verbose=False):
         self.abbrev_dt = DataLoader().load_abbrev_table()
         self.verbose = verbose
 
@@ -118,9 +117,9 @@ class DataBuilds:
         Parameters
         ----------
         data_schedule : DataFrame
-            _description_
+            Raw NFL schedule data
         data_production : DataFrame
-            _description_
+            Raw NFL game data
 
         Returns
         -------
@@ -130,10 +129,10 @@ class DataBuilds:
         DataFrame
             NFL schedule data truncated to include only relevant columns.
         """
-        prod_regular = self.filter_to_regular(data_object=data_production)
         trunc_schedule = self.truncate_schedule(data_schedule=data_schedule)
+        prod_regular = self.filter_to_regular(data_object=data_production)
 
-        return prod_regular, trunc_schedule
+        return trunc_schedule, prod_regular
 
     def design_matrix_by_week(self, data_schedule, data_production, week, mean_prod=False):
         """
@@ -142,9 +141,9 @@ class DataBuilds:
         Parameters
         ----------
         data_schedule : DataFrame
-            _description_
+            Raw NFL schedule data
         data_production : DataFrame
-            _description_
+            Raw NFL game data
         week : int
             Represents the week of the NFL season that predictions are to be made.
         mean_prod : bool, optional
@@ -212,60 +211,46 @@ class DataBuilds:
 
             hld_df = hld_df.append(final_h_vs_a_w3)
 
+        hld_df = Features().features_dot_main(data_object=hld_df)
+
         return hld_df
 
-    def design_dot_main(self, data_schedule, data_production, week, mean_prod=False):
+    def design_iter_dot_main(self, data_schedule, data_production, min_week=2, max_week=None, mean_prod=False):
         """
-        Wrapper that encapsulates the necessary logic to generate one week of NFL data that is temporally correct.
+        Wrapper that encapsulates the neccessary method(s) to generate many weeks of training data.
 
         Parameters
         ----------
         data_schedule : DataFrame
-            _description_
+            Raw NFL schedule data
         data_production : DataFrame
-            _description_
-        week : _type_
-            _description_
-        mean_prod : bool, optional
-            _description_, by default False
-
-        Returns
-        -------
-        DataFrame
-            _description_
-        """
-        design_matrix = self.design_matrix_by_week(
-            data_schedule=data_schedule,
-            data_production=data_production,
-            week=week,
-            mean_prod=mean_prod,
-        )
-
-        design_matrix = Features().features_dot_main(data_object=design_matrix)
-
-        return design_matrix
-
-    def design_train_iter_dot_main(self, data_schedule, data_production, min_week=2, max_week=None, mean_prod=False):
-        """
-        Wrapper that encapsulates the neccessary method(s) to generate many weeks of training data
-
-        Parameters
-        ----------
-        data_schedule : DataFrame
-            _description_
-        data_production : DataFrame
-            _description_
+            Raw NFL game data
         min_week : int, optional
-            _description_, by default 2
-        max_week : _type_, optional
-            _description_, by default None
+            Minimum regular season week to being to build training data, by default 2
+        max_week : int, optional
+            Maximum week to be included in the training dataset, by default None
         mean_prod : bool, optional
-            _description_, by default False
+            If True production metrics are aggregated by taking the mean, else aggregation is accomplished via summing over all relevant values, by default False
 
         Returns
         -------
         DataFrame
-            _description_
+            Dataset containing NFL matchups with production metrics mapped temporally.
+
+        Example
+        -------
+        >>> trunc_schedule2020, production_regular2020 = dataBuildCls.filter_and_truncate(
+        ...     data_schedule=schedule2020,
+        ...     data_production=prod2020
+        ... )
+
+        >>> train2020 = dataBuildCls.design_iter_dot_main(
+        ...     data_schedule=trunc_schedule2020,
+        ...     data_production=production_regular2020,
+        ...     min_week=3,
+        ...     max_week=None,
+        ...     mean_prod=True
+        ... )
         """
         if max_week is None:
             max_weeks = data_production["week"].max()
@@ -277,17 +262,16 @@ class DataBuilds:
 
         print(f"\n-- Training data for {list(iter_range)[-1] - 1} weeks --\n")
 
-        hld_df = pd.DataFrame()
+        # hld_df = pd.DataFrame()
+        design_matrix = pd.DataFrame()
         for w in iter_range:
-            tmp_design = self.design_dot_main(
-                data_schedule=data_schedule,
-                data_production=data_production,
-                week=w,
-                mean_prod=mean_prod,
+            tmp_design_matrix = self.design_matrix_by_week(
+                data_schedule=data_schedule, data_production=data_production, week=w, mean_prod=mean_prod
             )
-            hld_df = hld_df.append(tmp_design)
+
+            design_matrix = design_matrix.append(tmp_design_matrix)
 
             if self.verbose:
                 print(f"\n-- Week Complete: {w} --\n")
 
-        return hld_df
+        return design_matrix
