@@ -74,9 +74,13 @@ class Scraping:
             _description_
         """
         if team_abbr:
-            update_url = self.base_url + self.finish_url().get("by_team").format(team_abbr, self.nfl_year)
+            update_url = self.base_url + self.finish_url().get("by_team").format(
+                team_abbr, self.nfl_year
+            )
         else:
-            update_url = self.base_url + self.finish_url().get("by_schedule").format(self.nfl_year)
+            update_url = self.base_url + self.finish_url().get("by_schedule").format(
+                self.nfl_year
+            )
         return requests.get(update_url)
 
     def make_soup(self, team_abbr=None):
@@ -232,7 +236,9 @@ class Scraping:
 
         game_week_tbl["week"] = game_week_tbl["week"].astype(int)
         game_week_tbl.sort_values(["week"], ascending=True, inplace=True)
-        game_week_tbl["win_loss_as_int"] = game_week_tbl["win_loss"].map(self.win_loss_helper())
+        game_week_tbl["win_loss_as_int"] = game_week_tbl["win_loss"].map(
+            self.win_loss_helper()
+        )
 
         if len(check_idx) > 0:
             game_week_tbl = pd.concat([game_week_tbl, playoffs_tbl], axis=0)
@@ -265,9 +271,13 @@ class Scraping:
 
         abbrev_tbl = DataLoader().load_abbrev_table()
 
-        get_schedule_tbl["winner_abbrev"] = get_schedule_tbl["winner_tie"].map(abbrev_tbl)
+        get_schedule_tbl["winner_abbrev"] = get_schedule_tbl["winner_tie"].map(
+            abbrev_tbl
+        )
         get_schedule_tbl["loser_abbrev"] = get_schedule_tbl["loser_tie"].map(abbrev_tbl)
-        get_schedule_tbl["home_team_name"] = get_schedule_tbl["home_team"].map(abbrev_tbl)
+        get_schedule_tbl["home_team_name"] = get_schedule_tbl["home_team"].map(
+            abbrev_tbl
+        )
 
         get_schedule_tbl["winner_home_away"] = np.where(
             get_schedule_tbl["home_team_name"] == get_schedule_tbl["winner_tie"],

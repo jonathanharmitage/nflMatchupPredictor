@@ -1,10 +1,10 @@
-# from nflMatchupPredictor.Adhoc.Adhoc import Adhoc
 import warnings
 
 import pandas as pd
 
+from nflMatchupPredictor.Utilities.Utilities import Utilities
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
-from nflMatchupPredictor.Features.Features import Features
+
 
 warnings.simplefilter("ignore")
 
@@ -26,10 +26,13 @@ class DataBuilds:
         Returns
         -------
         DataFrame
-            NFL game data filtered to include only games that occurred in the regular season
+            NFL game data filtered to include only games that occurred in the
+            regular season
         """
         tmp_regular_season = data_object.loc[data_object["season_source"] != "playoffs"]
-        tmp_regular_season = tmp_regular_season.loc[tmp_regular_season["score_tm"] != "bye_week"]
+        tmp_regular_season = tmp_regular_season.loc[
+            tmp_regular_season["score_tm"] != "bye_week"
+        ]
 
         if tmp_regular_season["week"].dtype == "O":
             tmp_regular_season["week"] = tmp_regular_season["week"].astype(int)
@@ -58,8 +61,12 @@ class DataBuilds:
         """
         cols = ["week", "home_team_name", "away_team_name", "home_team_wins"]
         tmp_schedule = data_schedule.loc[:, cols]
-        tmp_schedule["home_team_abbrev"] = tmp_schedule["home_team_name"].map(self.abbrev_dt)
-        tmp_schedule["away_team_abbrev"] = tmp_schedule["away_team_name"].map(self.abbrev_dt)
+        tmp_schedule["home_team_abbrev"] = tmp_schedule["home_team_name"].map(
+            self.abbrev_dt
+        )
+        tmp_schedule["away_team_abbrev"] = tmp_schedule["away_team_name"].map(
+            self.abbrev_dt
+        )
 
         return tmp_schedule
 
@@ -124,7 +131,8 @@ class DataBuilds:
         Returns
         -------
         DataFrame
-            NFL game data filtered to include only games that occurred in the regular season
+            NFL game data filtered to include only games that occurred in the
+            regular season
 
         DataFrame
             NFL schedule data truncated to include only relevant columns.
@@ -134,7 +142,9 @@ class DataBuilds:
 
         return trunc_schedule, prod_regular
 
-    def design_matrix_by_week(self, data_schedule, data_production, week, mean_prod=False):
+    def design_matrix_by_week(
+        self, data_schedule, data_production, week, mean_prod=False
+    ):
         """
         Generate a design matrix that can be partitioned into train and test sets.
 
@@ -147,7 +157,8 @@ class DataBuilds:
         week : int
             Represents the week of the NFL season that predictions are to be made.
         mean_prod : bool, optional
-            If True production metrics are aggregated by taking the mean, else aggregation is accomplished via summing over all relevant values, by default False.
+            If True production metrics are aggregated by taking the mean, else aggregation
+            is accomplished via summing over all relevant values, by default False.
 
         Returns
         -------
@@ -162,11 +173,16 @@ class DataBuilds:
         tmp_schedule = data_schedule.loc[data_schedule["week"] == str(week)]
         tmp_schedule.reset_index(drop=True, inplace=True)
         # week3_upd == data_schedule
-        tmp_prod = data_production.copy()
+        # tmp_prod = data_production.copy()
+        tmp_production = data_production.copy()
+
         # s2020 == data_prod
 
-        all_need_ = self.features_need().get("all_need")
-        all_prod_ = self.features_need().get("all_prod")
+        # all_need_ = self.features_need().get("all_need")
+        # all_prod_ = self.features_need().get("all_prod")
+
+        all_need_ = Utilities().features_need().get("all_need")
+        all_prod_ = Utilities().features_need().get("all_prod")
 
         hld_df = pd.DataFrame()
         for i in range(tmp_schedule.shape[0]):
@@ -177,8 +193,16 @@ class DataBuilds:
 
             # h_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == h_) & (tmp_prod["week"] < week), all_need_]
             # a_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == a_) & (tmp_prod["week"] < week), all_need_]
-            tmp_home = tmp_prod.loc[(tmp_prod["nfl_team"] == home_tm_abbrev) & (tmp_prod["week"] < week), all_need_]
-            tmp_away = tmp_prod.loc[(tmp_prod["nfl_team"] == away_tm_abbrev) & (tmp_prod["week"] < week), all_need_]
+            tmp_home = tmp_production.loc[
+                (tmp_production["nfl_team"] == home_tm_abbrev)
+                & (tmp_production["week"] < week),
+                all_need_,
+            ]
+            tmp_away = tmp_production.loc[
+                (tmp_production["nfl_team"] == away_tm_abbrev)
+                & (tmp_production["week"] < week),
+                all_need_,
+            ]
 
             # Home team data
             if mean_prod:
@@ -195,7 +219,9 @@ class DataBuilds:
             # h_agg_w1w2["data_through_week_home"] = "through_week_" + str(week - 1)
             tmp_home_agg_prod.columns = [c + "_home_team" for c in tmp_home_agg_prod]
             tmp_home_agg_prod["home_team_name_abbrev"] = home_tm_abbrev
-            tmp_home_agg_prod["data_through_week_home"] = "through_week_" + str(week - 1)
+            tmp_home_agg_prod["data_through_week_home"] = "through_week_" + str(
+                week - 1
+            )
 
             # Away team data
             if mean_prod:
@@ -213,10 +239,14 @@ class DataBuilds:
 
             tmp_away_agg_prod.columns = [c + "_away_team" for c in tmp_away_agg_prod]
             tmp_away_agg_prod["away_team_name_abbrev"] = away_tm_abbrev
-            tmp_away_agg_prod["data_through_week_away"] = "through_week_" + str(week - 1)
+            tmp_away_agg_prod["data_through_week_away"] = "through_week_" + str(
+                week - 1
+            )
 
             # h_vs_a_w3 = pd.concat([h_agg_w1w2, a_agg_w1w2], axis=1)
-            tmp_home_vs_tmp_away_w3 = pd.concat([tmp_home_agg_prod, tmp_away_agg_prod], axis=1)
+            tmp_home_vs_tmp_away_w3 = pd.concat(
+                [tmp_home_agg_prod, tmp_away_agg_prod], axis=1
+            )
 
             # w_upd = tmp_schedule.iloc[i : i + 1, :]
             # w_upd.reset_index(drop=True, inplace=True)
@@ -227,8 +257,12 @@ class DataBuilds:
             # final_h_vs_a_w3["predicting_for_week"] = "predicting_for_week_" + str(week)
             # final_h_vs_a_w3["agg_type"] = agg_type
 
-            final_home_vs_away = pd.concat([tmp_week_upd, tmp_home_vs_tmp_away_w3], axis=1)
-            final_home_vs_away["predicting_for_week"] = "predicting_for_week_" + str(week)
+            final_home_vs_away = pd.concat(
+                [tmp_week_upd, tmp_home_vs_tmp_away_w3], axis=1
+            )
+            final_home_vs_away["predicting_for_week"] = "predicting_for_week_" + str(
+                week
+            )
             final_home_vs_away["agg_type"] = agg_type
 
             # hld_df = hld_df.append(final_h_vs_a_w3)
@@ -239,7 +273,9 @@ class DataBuilds:
 
         return hld_df
 
-    def design_iter_dot_main(self, data_schedule, data_production, min_week=2, max_week=None, mean_prod=False):
+    def design_iter_dot_main(
+        self, data_schedule, data_production, min_week=2, max_week=None, mean_prod=False
+    ):
         """
         Wrapper that encapsulates the neccessary method(s) to generate many weeks of training data.
 
@@ -254,7 +290,8 @@ class DataBuilds:
         max_week : int, optional
             Maximum week to be included in the training dataset, by default None
         mean_prod : bool, optional
-            If True production metrics are aggregated by taking the mean, else aggregation is accomplished via summing over all relevant values, by default False
+            If True production metrics are aggregated by taking the mean, else aggregation is
+            accomplished via summing over all relevant values, by default False
 
         Returns
         -------
@@ -289,7 +326,10 @@ class DataBuilds:
         design_matrix = pd.DataFrame()
         for w in iter_range:
             tmp_design_matrix = self.design_matrix_by_week(
-                data_schedule=data_schedule, data_production=data_production, week=w, mean_prod=mean_prod
+                data_schedule=data_schedule,
+                data_production=data_production,
+                week=w,
+                mean_prod=mean_prod,
             )
 
             design_matrix = design_matrix.append(tmp_design_matrix)
@@ -299,8 +339,8 @@ class DataBuilds:
 
         design_matrix.reset_index(drop=True, inplace=True)
 
-        # meta_features, rmv_features = Features().meta_features()
-        rearrange_feats = Features().arrange_features(data_object=design_matrix)
+        # Purely for aestehtics
+        rearrange_feats = Utilities().arrange_features(data_object=design_matrix)
         design_matrix = design_matrix.loc[:, rearrange_feats]
 
         return design_matrix

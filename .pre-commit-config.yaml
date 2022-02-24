@@ -1,4 +1,4 @@
-exclude: '.git|.tox|/Features.py'
+exclude: '.git|.tox|/'
 default_stages: [commit, push]
 
 repos:

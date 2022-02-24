@@ -38,7 +38,9 @@ class DataLoader:
         data_tbl = pd.read_csv(full_path)
 
         if self.verbose:
-            print(f"\n-- Data Source: {for_verbose} | Year: {nfl_year} | Rows: {data_tbl.shape[0]} --\n")
+            print(
+                f"\n-- Data Source: {for_verbose} | Year: {nfl_year} | Rows: {data_tbl.shape[0]} --\n"
+            )
 
         return data_tbl
 

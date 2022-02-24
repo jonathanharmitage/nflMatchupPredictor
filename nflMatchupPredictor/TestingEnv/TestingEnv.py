@@ -21,7 +21,8 @@ class TestEnv:
         max_week : int, optional
             Maximum week to be included in the training dataset, by default None
         mean_prod : bool, optional
-            If True production metrics are aggregated by taking the mean, else aggregation is accomplished via summing over all relevant values, by default False
+            If True production metrics are aggregated by taking the mean, else aggregation
+            is accomplished via summing over all relevant values, by default False
 
         Returns
         -------
@@ -37,8 +38,12 @@ class TestEnv:
         ...     mean_prod=True
         ... )
         """
-        data_schedule = self.data_loader.load_data_by_year(nfl_year=nfl_year, production=False)
-        data_production = self.data_loader.load_data_by_year(nfl_year=nfl_year, production=True)
+        data_schedule = self.data_loader.load_data_by_year(
+            nfl_year=nfl_year, production=False
+        )
+        data_production = self.data_loader.load_data_by_year(
+            nfl_year=nfl_year, production=True
+        )
         schedule_regular, production_regular = self.data_build.filter_and_truncate(
             data_schedule=data_schedule, data_production=data_production
         )
