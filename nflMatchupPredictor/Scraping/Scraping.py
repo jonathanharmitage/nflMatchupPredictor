@@ -66,15 +66,15 @@ class Scraping:
         Parameters
         ----------
         team_abbr : str, optional
-            _description_, by default None
+            Abbrevation of NFL team, by default None
 
         Returns
         -------
-        _type_
+        HTTP request object
             _description_
         """
         if team_abbr:
-            update_url = self.base_url + self.finish_url().get("by_team").format(self.nfl_year)
+            update_url = self.base_url + self.finish_url().get("by_team").format(team_abbr, self.nfl_year)
         else:
             update_url = self.base_url + self.finish_url().get("by_schedule").format(self.nfl_year)
         return requests.get(update_url)
@@ -86,7 +86,7 @@ class Scraping:
         Parameters
         ----------
         team_abbr : str, optional
-            _description_, by default None
+            Abbrevation of NFL team, by default None
 
         Returns
         -------
@@ -142,8 +142,12 @@ class Scraping:
 
         Returns
         -------
-        _type_
+        DataFrame
             _description_
+
+        Notes
+        -----
+        Move renaming of columns to utility class.
         """
         html_table = soup_object.select("table#games")[0]
         html_to_df = pd.read_html(str(html_table))[0]
@@ -240,12 +244,12 @@ class Scraping:
 
     def scrape_schedule_dot_main(self, team_abbr=None):
         """
-        scrape_schedule_dot_main Wrapper that encapsulates the necessary logic to fetch an NFL schedule(s)
+        Wrapper that encapsulates the necessary logic to fetch a NFL team(s) schedule.
 
         Parameters
         ----------
         team_abbr : str, optional
-            _description_, by default None
+            Abbrevation of NFL team, by default None
 
         Returns
         -------
@@ -287,9 +291,23 @@ class Scraping:
             return get_schedule_tbl
 
     def scrape_dot_main(self, team_abbr):
+        """
+        Wrapper that encapsulates the necessary logic to fetch a NFL team(s) production data.
+
+        Parameters
+        ----------
+        team_abbr : str
+            Abbrevation of NFL team
+
+        Returns
+        -------
+        DataFrame
+            _description_
+        """
         soup = self.make_soup(team_abbr=team_abbr)
         tmp_tbl = self.get_table(soup_object=soup)
         tmp_tbl = self.format_table(table_object=tmp_tbl)
         tmp_tbl["nfl_team"] = team_abbr
         tmp_tbl["nfl_season"] = self.nfl_year
+
         return tmp_tbl

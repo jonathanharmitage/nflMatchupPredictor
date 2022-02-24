@@ -28,7 +28,7 @@ class DataLoader:
             _description_
         """
         if production:
-            file_name = "/start{}.csv".format(nfl_year)
+            file_name = "/start{}_new.csv".format(nfl_year)
             for_verbose = "production"
         else:
             file_name = "/schedule{}.csv".format(nfl_year)

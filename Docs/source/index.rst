@@ -11,6 +11,11 @@ Welcome to NFL Matchup Predictor documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   sample_function
+
+:doc:`sample_function`
+    Documentation for sample function
+
 
 
 Indices and tables

@@ -170,48 +170,72 @@ class DataBuilds:
 
         hld_df = pd.DataFrame()
         for i in range(tmp_schedule.shape[0]):
-            h_ = tmp_schedule["home_team_abbrev"].iloc[i]
-            a_ = tmp_schedule["away_team_abbrev"].iloc[i]
+            # h_ = tmp_schedule["home_team_abbrev"].iloc[i]
+            # a_ = tmp_schedule["away_team_abbrev"].iloc[i]
+            home_tm_abbrev = tmp_schedule["home_team_abbrev"].iloc[i]
+            away_tm_abbrev = tmp_schedule["away_team_abbrev"].iloc[i]
 
-            h_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == h_) & (tmp_prod["week"] < week), all_need_]
-            a_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == a_) & (tmp_prod["week"] < week), all_need_]
+            # h_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == h_) & (tmp_prod["week"] < week), all_need_]
+            # a_w1w2 = tmp_prod.loc[(tmp_prod["nfl_team"] == a_) & (tmp_prod["week"] < week), all_need_]
+            tmp_home = tmp_prod.loc[(tmp_prod["nfl_team"] == home_tm_abbrev) & (tmp_prod["week"] < week), all_need_]
+            tmp_away = tmp_prod.loc[(tmp_prod["nfl_team"] == away_tm_abbrev) & (tmp_prod["week"] < week), all_need_]
 
             # Home team data
             if mean_prod:
-                h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].mean()).T
+                # h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].mean()).T
+                tmp_home_agg_prod = pd.DataFrame(tmp_home[all_prod_].mean()).T
                 agg_type = "mean"
             else:
-                h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
+                # h_agg_w1w2 = pd.DataFrame(h_w1w2[all_prod_].sum()).T
+                tmp_home_agg_prod = pd.DataFrame(tmp_home[all_prod_].sum()).T
                 agg_type = "sum"
 
-            h_agg_w1w2.columns = [c + "_home_team" for c in h_agg_w1w2]
-            h_agg_w1w2["home_team_name_abbrev"] = h_
-            h_agg_w1w2["data_through_week_home"] = "through_week_" + str(week - 1)
+            # h_agg_w1w2.columns = [c + "_home_team" for c in h_agg_w1w2]
+            # h_agg_w1w2["home_team_name_abbrev"] = h_
+            # h_agg_w1w2["data_through_week_home"] = "through_week_" + str(week - 1)
+            tmp_home_agg_prod.columns = [c + "_home_team" for c in tmp_home_agg_prod]
+            tmp_home_agg_prod["home_team_name_abbrev"] = home_tm_abbrev
+            tmp_home_agg_prod["data_through_week_home"] = "through_week_" + str(week - 1)
 
             # Away team data
             if mean_prod:
-                a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].mean()).T
+                # a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].mean()).T
+                tmp_away_agg_prod = pd.DataFrame(tmp_away[all_prod_].mean()).T
                 agg_type = "mean"
             else:
-                a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
+                # a_agg_w1w2 = pd.DataFrame(a_w1w2[all_prod_].sum()).T
+                tmp_away_agg_prod = pd.DataFrame(tmp_away[all_prod_].sum()).T
                 agg_type = "sum"
 
-            a_agg_w1w2.columns = [c + "_away_team" for c in a_agg_w1w2]
-            a_agg_w1w2["away_team_name_abbrev"] = a_
-            a_agg_w1w2["data_through_week_away"] = "through_week_" + str(week - 1)
+            # a_agg_w1w2.columns = [c + "_away_team" for c in a_agg_w1w2]
+            # a_agg_w1w2["away_team_name_abbrev"] = a_
+            # a_agg_w1w2["data_through_week_away"] = "through_week_" + str(week - 1)
 
-            h_vs_a_w3 = pd.concat([h_agg_w1w2, a_agg_w1w2], axis=1)
+            tmp_away_agg_prod.columns = [c + "_away_team" for c in tmp_away_agg_prod]
+            tmp_away_agg_prod["away_team_name_abbrev"] = away_tm_abbrev
+            tmp_away_agg_prod["data_through_week_away"] = "through_week_" + str(week - 1)
 
-            w_upd = tmp_schedule.iloc[i : i + 1, :]
-            w_upd.reset_index(drop=True, inplace=True)
+            # h_vs_a_w3 = pd.concat([h_agg_w1w2, a_agg_w1w2], axis=1)
+            tmp_home_vs_tmp_away_w3 = pd.concat([tmp_home_agg_prod, tmp_away_agg_prod], axis=1)
 
-            final_h_vs_a_w3 = pd.concat([w_upd, h_vs_a_w3], axis=1)
-            final_h_vs_a_w3["predicting_for_week"] = "predicting_for_week_" + str(week)
-            final_h_vs_a_w3["agg_type"] = agg_type
+            # w_upd = tmp_schedule.iloc[i : i + 1, :]
+            # w_upd.reset_index(drop=True, inplace=True)
+            tmp_week_upd = tmp_schedule.iloc[i : i + 1, :]
+            tmp_week_upd.reset_index(drop=True, inplace=True)
 
-            hld_df = hld_df.append(final_h_vs_a_w3)
+            # final_h_vs_a_w3 = pd.concat([w_upd, h_vs_a_w3], axis=1)
+            # final_h_vs_a_w3["predicting_for_week"] = "predicting_for_week_" + str(week)
+            # final_h_vs_a_w3["agg_type"] = agg_type
 
-        hld_df = Features().features_dot_main(data_object=hld_df)
+            final_home_vs_away = pd.concat([tmp_week_upd, tmp_home_vs_tmp_away_w3], axis=1)
+            final_home_vs_away["predicting_for_week"] = "predicting_for_week_" + str(week)
+            final_home_vs_away["agg_type"] = agg_type
+
+            # hld_df = hld_df.append(final_h_vs_a_w3)
+            hld_df = hld_df.append(final_home_vs_away)
+
+        # Add features?
+        # hld_df = Features().features_dot_main(data_object=hld_df)
 
         return hld_df
 
@@ -262,7 +286,6 @@ class DataBuilds:
 
         print(f"\n-- Training data for {list(iter_range)[-1] - 1} weeks --\n")
 
-        # hld_df = pd.DataFrame()
         design_matrix = pd.DataFrame()
         for w in iter_range:
             tmp_design_matrix = self.design_matrix_by_week(
@@ -273,5 +296,11 @@ class DataBuilds:
 
             if self.verbose:
                 print(f"\n-- Week Complete: {w} --\n")
+
+        design_matrix.reset_index(drop=True, inplace=True)
+
+        # meta_features, rmv_features = Features().meta_features()
+        rearrange_feats = Features().arrange_features(data_object=design_matrix)
+        design_matrix = design_matrix.loc[:, rearrange_feats]
 
         return design_matrix
