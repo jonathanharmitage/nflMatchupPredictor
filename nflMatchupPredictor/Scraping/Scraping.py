@@ -6,7 +6,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
+# from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 
 warnings.simplefilter("ignore")
 
@@ -18,8 +18,11 @@ class Scraping:
 
         self.base_url = "https://www.pro-football-reference.com"
 
+    def get_full_url(self, url_key):
+        return self.base_url + self.finish_url().get(url_key)
+
     def finish_url(self):
-        dt = {"by_team": "/teams/{}/{}.htm", "by_schedule": "/years/{}/games.htm"}
+        dt = {"by_team": "/teams/{}/{}.htm", "by_schedule": "/years/{}/games.htm", "teams": "/teams/"}
 
         return dt
 
@@ -59,6 +62,10 @@ class Scraping:
         win_loss_dt = {"W": 1, "L": 0, "T": 0.5, "bye_week": 0}
         return win_loss_dt
 
+    def make_request2(self, url_key, *args):
+        url = self.get_full_url(url_key).format(*args)
+        return requests.get(url)
+
     def make_request(self, team_abbr=None):
         """
         Request website
@@ -83,7 +90,11 @@ class Scraping:
             )
         return requests.get(update_url)
 
-    def make_soup(self, team_abbr=None):
+    def make_soup2(self, url_key, *args):
+        req = self.make_request2(url_key, *args)
+        return BeautifulSoup(req.content, "lxml")
+
+    def make_soup(self, team_abbr=None, load_teams=False):
         """
         Instantiate a BeautifulSoup object
 
@@ -176,6 +187,27 @@ class Scraping:
 
         return html_to_df
 
+    def get_teams(self):
+        soup = self.make_soup2('teams')
+        table = soup.select("table#teams_active")[0]
+        body = table.find('tbody')
+        rows = body.find_all('tr')
+
+        teams_abbr = {}
+        current_abbr = ''
+        for row in rows:
+            th_tag = row.find('th')
+            classes = row.attrs.get('class')
+            if (not classes is None) and ('partial_table' in classes):
+                team_name = th_tag.get_text()
+            else:
+                current_abbr = th_tag.a.get('href').split('/')[-2]
+                team_name = th_tag.a.get_text()
+            teams_abbr[team_name] = current_abbr
+        
+        return teams_abbr
+            
+
     def get_table(self, soup_object):
         html_table = soup_object.select("table#games")[0]
         html_to_df = pd.read_html(str(html_table))[0]
@@ -248,7 +280,7 @@ class Scraping:
 
         return game_week_tbl
 
-    def scrape_schedule_dot_main(self, team_abbr=None):
+    def scrape_schedule_dot_main(self, team_abbr=None, abbrev_tbl=None):
         """
         Wrapper that encapsulates the necessary logic to fetch a NFL team(s) schedule.
 
@@ -269,7 +301,7 @@ class Scraping:
         get_schedule_tbl["home_team"] = get_tm_abbrev
         get_schedule_tbl = get_schedule_tbl.loc[get_schedule_tbl["Date"] != "Playoffs"]
 
-        abbrev_tbl = DataLoader().load_abbrev_table()
+        # abbrev_tbl = DataLoader().load_abbrev_table()
 
         get_schedule_tbl["winner_abbrev"] = get_schedule_tbl["winner_tie"].map(
             abbrev_tbl

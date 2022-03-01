@@ -1,12 +1,15 @@
 import os
 
 import pandas as pd
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+from nflMatchupPredictor.Scraping.Scraping import Scraping
+from nflMatchupPredictor.Utilities.utilities import (Utilities)
 
 class DataLoader:
     def __init__(self, verbose=False):
         self.verbose = verbose
+        self.utils = Utilities()
 
         load_dotenv()
         self.local_data_raw_dir = os.getenv("LOCAL_RAW_DATA_DIR")
@@ -53,8 +56,12 @@ class DataLoader:
         dict
             _description_
         """
-        abbrev_data_name = self.local_data_raw_dir + "/tm_abbrev.csv"
-        abbrev_data = pd.read_csv(abbrev_data_name)
-        to_dt = dict(zip(abbrev_data["team_name_a"], abbrev_data["team_name_b"]))
-
-        return to_dt
+        if self.utils.file_exists('tm_abbrev'):
+            abbrev_data = self.utils.load_local('tm_abbrev')
+            return dict(zip(abbrev_data["Team Name"], abbrev_data["Team Abbr"]))
+        
+        teams = Scraping().get_teams()
+        df = pd.DataFrame({'Team Name': teams.keys(), 'Team Abbr': teams.values()})
+        self.utils.write_local(df, 'tm_abbrev')
+        return teams
+        

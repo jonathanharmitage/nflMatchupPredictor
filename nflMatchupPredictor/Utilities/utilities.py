@@ -1,8 +1,15 @@
 import os
 
 import pandas as pd
-from dotenv import load_dotenv
 
+from dotenv import load_dotenv
+from pathlib import Path  
+from enum import Enum, auto
+
+class FileFormat(Enum):
+    CSV = auto()
+    Pickle = auto()
+    NA = auto()
 
 class Utilities:
     def __init__(self, verbose=False):
@@ -110,7 +117,7 @@ class Utilities:
 
         return dt
 
-    def load_local(self, file_name):
+    def load_local(self, file_name, file_format = FileFormat.CSV):
         """
         Load data from local directory.
 
@@ -118,28 +125,91 @@ class Utilities:
         ----------
         file_name : str
             Name of file to be loaded. Do not include the residing directory.
+        file_format : FileFormat, optional
+            Format of the file to load from the FileFormat enum. 
+            The default is FileFormat.CSV.
+
+        Raises
+        ------
+        NotImplementedError
+            _description_
 
         Returns
         -------
         DataFrame
             _description_
-        """
-        if ".csv" not in file_name:
-            file_name += ".csv"
 
-        return pd.read_csv(self.local_data_raw_dir + "/" + file_name)
-
-    def write_local(self, data_object, write_name):
         """
-        Write data to a local directory as a CSV.
+
+        file_name = self.__format_filename(file_name, file_format)
+
+        if file_format is FileFormat.CSV:
+            return pd.read_csv(self.__full_filepath(file_name))
+        elif file_format is FileFormat.Pickle:
+            return pd.read_pickle(self.__full_filepath(file_name))
+
+        raise NotImplementedError(f'File format {file_format} not implemented')
+
+    def write_local(self, data_object, file_name, file_format = FileFormat.CSV):
+        """
+        Write data to a local directory in the specified file format.
 
         Parameters
         ----------
         data_object : DataFrame
-        write_name : str
+        file_name : str
             Name of file to be saved. Do not include the residing directory.
-        """
-        if ".csv" not in write_name:
-            write_name += ".csv"
+        file_format : FileFormat, optional
+            Format of the file to write from the FileFormat enum. 
+            The default is FileFormat.CSV.
 
-        data_object.to_csv(self.local_data_raw_dir + "/" + write_name, index=False)
+        """
+        
+        file_name = self.__format_filename(file_name, file_format)
+        if not os.path.exists(self.local_data_raw_dir):
+            os.makedirs(self.local_data_raw_dir)
+
+        if file_format is FileFormat.CSV:
+            data_object.to_csv(self.__full_filepath(file_name), index=False)
+        elif file_format is FileFormat.Pickle:
+            data_object.to_pickle(self.__full_filepath(file_name))
+        
+    def file_exists(self, file_name, file_format = FileFormat.CSV):
+        """
+        Checks if the file exists
+
+        Parameters
+        ----------
+        file_name : str
+            Filename to check for.
+        file_format : FileFormat, optional
+            Format of the file to check. 
+            The default is FileFormat.CSV.
+
+        Returns
+        -------
+        bool
+            True if the file exists, otherwise False.
+
+        """
+        file_name = self.__format_filename(file_name, file_format)
+        filepath = Path(f'{self.local_data_raw_dir}/{file_name}')  
+        return filepath.exists()
+
+    def __format_filename(self, file_name, file_format):
+        if self.__file_extension(file_format) not in file_name:
+            file_name += self.__file_extension(file_format)
+        
+        return file_name
+
+    def __file_extension(self, file_format):
+        if file_format == FileFormat.CSV:
+            return '.csv'
+        elif file_format == FileFormat.Pickle:
+            return '.pkl'
+        
+        raise NotImplementedError(f'File format {file_format} not implemented')
+        
+    def __full_filepath(self, file_name):
+        return self.local_data_raw_dir + "/" + file_name
+    
