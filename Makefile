@@ -1,4 +1,4 @@
-.PHONY: requirements clean data upgrade
+.PHONY: requirements clean format data upgrade
 
 ###############
 ### GLOBALS ###
@@ -15,11 +15,13 @@ PACKAGE_NAME := nflMatchupPredictor
 requirements:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-
 ## Delete all compiled Python files ##
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -type d -name "__pycache__" -delete
+
+format:
+	poetry run pre-commit run --all-files
 
 data: requirements
 	poetry run python -m $(PACKAGE_NAME)/DataLoaders/CreateDataCli.py DataRepo/Raw DataRepo/Processed
