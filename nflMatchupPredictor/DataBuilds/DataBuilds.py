@@ -2,7 +2,7 @@ import warnings
 
 import pandas as pd
 
-from nflMatchupPredictor.Utilities.Utilities import Utilities
+from nflMatchupPredictor.Utilities.utilities import Utilities
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 
 
