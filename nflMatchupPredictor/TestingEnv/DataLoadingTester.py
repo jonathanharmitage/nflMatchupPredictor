@@ -17,9 +17,7 @@ def main():
     util = Utilities()
     scrape = Scraping()
     
-    util.__format_filename('test',FileFormat.CSV)
-    
-    print(dl.load_abbrev_table())
+    print(dl.abbrev_to_team_list_map())
     
 
     

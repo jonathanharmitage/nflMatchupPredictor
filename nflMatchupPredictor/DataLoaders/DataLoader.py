@@ -47,21 +47,47 @@ class DataLoader:
 
         return data_tbl
 
-    def load_abbrev_table(self):
+    def team_to_abbrev_map(self):
         """
-        Load NFL team abbrevations.
+        Loads a map of NFL team names to their abbreviations on pro-football-reference
 
         Returns
         -------
         dict
-            _description_
+            Map from team name (e.g. 'Indianapolis Colts') to their abbreviation
+            (e.g. 'clt').
+
         """
+        abbrev_data = self.__load_abbrev_df()
+        return dict(zip(abbrev_data["Team Name"], abbrev_data["Team Abbr"]))
+    
+    def abbrev_to_team_list_map(self):
+        """
+        Loads a map of NFL team abbreviations on pro-football-reference to a list
+        of team names associated with that abbreviation. This includes old team
+        names such as the Washington Redskins
+
+        Returns
+        -------
+        team_list_map : dict
+            Map from team abbreviation (e.g. 'clt') to a list of team names 
+            (e.g. ['Indianapolis Colts', 'Baltimore Colts']).
+
+        """
+        team_list_map = {}
+        abbrev_data = self.__load_abbrev_df()
+        
+        for index in range(len(abbrev_data)):
+            if abbrev_data.iloc[index, 1] not in team_list_map.keys():
+                team_list_map[abbrev_data.iloc[index, 1]] = []
+            team_list_map[abbrev_data.iloc[index, 1]].append(abbrev_data.iloc[index, 0])
+        return team_list_map
+
+    def __load_abbrev_df(self):
         if self.utils.file_exists('tm_abbrev'):
             abbrev_data = self.utils.load_local('tm_abbrev')
-            return dict(zip(abbrev_data["Team Name"], abbrev_data["Team Abbr"]))
+            return abbrev_data
         
         teams = Scraping().get_teams()
         df = pd.DataFrame({'Team Name': teams.keys(), 'Team Abbr': teams.values()})
-        self.utils.write_local(df, 'tm_abbrev')
-        return teams
-        
+        return df       
