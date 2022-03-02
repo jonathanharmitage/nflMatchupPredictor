@@ -2,7 +2,7 @@ import warnings
 
 import pandas as pd
 
-from nflMatchupPredictor.Utilities.utilities import Utilities
+from nflMatchupPredictor.Utilities.Utilities import Utilities
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 
 
@@ -219,9 +219,7 @@ class DataBuilds:
             # h_agg_w1w2["data_through_week_home"] = "through_week_" + str(week - 1)
             tmp_home_agg_prod.columns = [c + "_home_team" for c in tmp_home_agg_prod]
             tmp_home_agg_prod["home_team_name_abbrev"] = home_tm_abbrev
-            tmp_home_agg_prod["data_through_week_home"] = "through_week_" + str(
-                week - 1
-            )
+            tmp_home_agg_prod["data_through_week_home"] = "through_week_" + str(week - 1)
 
             # Away team data
             if mean_prod:
@@ -239,9 +237,7 @@ class DataBuilds:
 
             tmp_away_agg_prod.columns = [c + "_away_team" for c in tmp_away_agg_prod]
             tmp_away_agg_prod["away_team_name_abbrev"] = away_tm_abbrev
-            tmp_away_agg_prod["data_through_week_away"] = "through_week_" + str(
-                week - 1
-            )
+            tmp_away_agg_prod["data_through_week_away"] = "through_week_" + str(week - 1)
 
             # h_vs_a_w3 = pd.concat([h_agg_w1w2, a_agg_w1w2], axis=1)
             tmp_home_vs_tmp_away_w3 = pd.concat(
@@ -339,7 +335,7 @@ class DataBuilds:
 
         design_matrix.reset_index(drop=True, inplace=True)
 
-        # Purely for aestehtics
+        # Purely for aesthetics
         rearrange_feats = Utilities().arrange_features(data_object=design_matrix)
         design_matrix = design_matrix.loc[:, rearrange_feats]
 
