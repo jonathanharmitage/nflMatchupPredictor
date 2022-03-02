@@ -9,47 +9,56 @@ import os
 
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 
-def viewTeams():
-    options = ['Teams-to-Abbrev', 'Abbrev-to-Team-List']
-    dl = DataLoader()    
+def display_options(options):
     os.system('clear')
     
     while True:
         print('')
         
-        for index,opt in enumerate(options):
+        mapper = {str(index+1):options[key] for index,key in enumerate(options.keys())}
+        for index,opt in enumerate(options.keys()):
             print(f'{index+1}. {opt}')
             
         val = input('Selection: ')
         
-        if val == '1':
-            teams = dl.team_to_abbrev_map()
-            for team,abb in teams.items():
-                print(f'{team}: {abb}')
-        elif val == '2':
-            teams = dl.abbrev_to_team_list_map()
-            for team,abb in teams.items():
-                print(f'{team}: {abb}')
-        elif val == 'q':
+        if val == 'q':
             break
+        elif val in mapper.keys():
+            mapper[val]()
+        else:
+            print('Invalid choice')
+   
+        
+def view_teams_to_abbrev():
+    dl = DataLoader() 
+    teams = dl.team_to_abbrev_map()
+    for team,abb in teams.items():
+        print(f'{team}: {abb}')
+    input()
+    
+def view_abbrev_to_team_list():
+    dl = DataLoader() 
+    teams = dl.abbrev_to_team_list_map()
+    for team,abb in teams.items():
+        print(f'{team}: {abb}')
+    input()
+
+def view_teams():
+    options = {'Teams-to-Abbrev': view_teams_to_abbrev, 
+               'Abbrev-to-Team-List': view_abbrev_to_team_list}
+    
+    display_options(options)
+    
+    return
 
 def main():
-    options = ['View Teams']
+    options = {'View Teams': view_teams}
     os.system('clear')
     
-    while True:
-        print('')
-        
-        for index,opt in enumerate(options):
-            print(f'{index+1}. {opt}')
-            
-        val = input('Selection: ')
-        
-        if val == '1':
-            viewTeams()
-        elif val == 'q':
-            break
+    display_options(options)
     
+    return
+   
 
 if __name__ == "__main__":
     main()

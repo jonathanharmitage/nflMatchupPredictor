@@ -22,7 +22,9 @@ class Scraping:
         return self.base_url + self.finish_url().get(url_key)
 
     def finish_url(self):
-        dt = {"by_team": "/teams/{}/{}.htm", "by_schedule": "/years/{}/games.htm", "teams": "/teams/"}
+        dt = {"by_team": "/teams/{}/{}.htm",
+              "by_schedule": "/years/{}/games.htm",
+              'teams': "/teams/"}
 
         return dt
 
@@ -94,7 +96,7 @@ class Scraping:
         req = self.make_request2(url_key, *args)
         return BeautifulSoup(req.content, "lxml")
 
-    def make_soup(self, team_abbr=None, load_teams=False):
+    def make_soup(self, team_abbr=None, load_teams = False):
         """
         Instantiate a BeautifulSoup object
 
@@ -204,9 +206,7 @@ class Scraping:
                 current_abbr = th_tag.a.get('href').split('/')[-2]
                 team_name = th_tag.a.get_text()
             teams_abbr[team_name] = current_abbr
-        
         return teams_abbr
-            
 
     def get_table(self, soup_object):
         html_table = soup_object.select("table#games")[0]
