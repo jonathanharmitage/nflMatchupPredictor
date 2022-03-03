@@ -60,6 +60,8 @@ class DataLoader:
 
         """
         abbrev_data = self.__load_abbrev_df()
+        abbrev_data.columns = ["Team Name", "Team Abbr"]
+        # return abbrev_data
         return dict(zip(abbrev_data["Team Name"], abbrev_data["Team Abbr"]))
 
     def abbrev_to_team_list_map(self):
@@ -92,3 +94,10 @@ class DataLoader:
         teams = Scraping().get_teams()
         df = pd.DataFrame({"Team Name": teams.keys(), "Team Abbr": teams.values()})
         return df
+
+
+if __name__ == "__main__":
+    clsDataLoader = DataLoader()
+    # data_dt = clsDataLoader.team_to_abbrev_map()
+    # print(f"\n\n-- Data DT: {list(data_dt.keys())} --\n\n")
+    # print(data_dt)

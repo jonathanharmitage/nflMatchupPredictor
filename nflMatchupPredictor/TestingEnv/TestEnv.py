@@ -57,3 +57,13 @@ class TestEnv:
         )
 
         return data_tbl
+
+
+if __name__ == "__main__":
+    clsTest = TestEnv()
+    data_tbl = clsTest.dot_main(nfl_year=2020, min_week=3, max_week=None, mean_prod=True)
+
+    if data_tbl.shape[0] > 0:
+        print("\n\n-- Success --\n\n")
+    else:
+        print("\n\n-- Check Code --\n\n")
