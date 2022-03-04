@@ -22,6 +22,7 @@ class Scraping:
         return self.base_url + self.finish_url().get(url_key)
 
     def finish_url(self):
+
         dt = {
             "by_team": "/teams/{}/{}.htm",
             "by_schedule": "/years/{}/games.htm",
