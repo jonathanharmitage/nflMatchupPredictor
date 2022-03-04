@@ -51,11 +51,10 @@ class GeneralDataScraper(BaseScraper):
         table = super().get_table(soup, "games")
         df = pd.read_html(str(table))[0]
 
-        df = df.loc[df["Week"] != "Week"]
+        df = df.loc[df['Week'] != "Week"]
         df.reset_index(inplace=True, drop=True)
 
-        df = super().format_data_frame(
-            df, rename_columns=self.column_rename(), to_lower=True)
+        df = super().format_data_frame(df, rename_columns=self.column_rename(), to_lower=True)
 
         return df
 
