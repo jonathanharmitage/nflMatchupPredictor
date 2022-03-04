@@ -96,7 +96,7 @@ class Scraping:
         req = self.make_request2(url_key, *args)
         return BeautifulSoup(req.content, "lxml")
 
-    def make_soup(self, team_abbr=None, load_teams = False):
+    def make_soup(self, team_abbr=None, load_teams=False):
         """
         Instantiate a BeautifulSoup object
 

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 
 from dotenv import load_dotenv
-from nflMatchupPredictor.Scraping.Scraping import Scraping
+from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
 from nflMatchupPredictor.Utilities.Utilities import Utilities
 
 
@@ -50,13 +50,14 @@ class DataLoader:
 
     def team_to_abbrev_map(self):
         """
-        Loads a map of NFL team names to their abbreviations on pro-football-reference
+        Loads a map of NFL team names to their abbreviations on
+        pro-football-reference
 
         Returns
         -------
         dict
-            Map from team name (e.g. 'Indianapolis Colts') to their abbreviation
-            (e.g. 'clt').
+            Map from team name (e.g. 'Indianapolis Colts') to their
+            abbreviation (e.g. 'clt').
 
         """
         abbrev_data = self.__load_abbrev_df()
@@ -64,16 +65,15 @@ class DataLoader:
 
     def abbrev_to_team_list_map(self):
         """
-        Loads a map of NFL team abbreviations on pro-football-reference to a list
-        of team names associated with that abbreviation. This includes old team
-        names such as the Washington Redskins
+        Loads a map of NFL team abbreviations on pro-football-reference to a
+        list of team names associated with that abbreviation. This includes
+        old team names such as the Washington Redskins
 
         Returns
         -------
         team_list_map : dict
             Map from team abbreviation (e.g. 'clt') to a list of team names
             (e.g. ['Indianapolis Colts', 'Baltimore Colts']).
-
         """
         team_list_map = {}
         abbrev_data = self.__load_abbrev_df()
@@ -81,7 +81,8 @@ class DataLoader:
         for index in range(len(abbrev_data)):
             if abbrev_data.iloc[index, 1] not in team_list_map.keys():
                 team_list_map[abbrev_data.iloc[index, 1]] = []
-            team_list_map[abbrev_data.iloc[index, 1]].append(abbrev_data.iloc[index, 0])
+            team_list_map[abbrev_data.iloc[index, 1]].append(
+                abbrev_data.iloc[index, 0])
         return team_list_map
 
     def __load_abbrev_df(self):
@@ -89,6 +90,10 @@ class DataLoader:
             abbrev_data = self.utils.load_local("tm_abbrev")
             return abbrev_data
 
-        teams = Scraping().get_teams()
-        df = pd.DataFrame({"Team Name": teams.keys(), "Team Abbr": teams.values()})
+        teams = GeneralDataScraper().get_all_teams()
+
+        df = pd.DataFrame({"Team Name": teams.keys(),
+                          "Team Abbr": teams.values()})
+        self.utils.write_local(df, "tm_abbrev")
+
         return df
