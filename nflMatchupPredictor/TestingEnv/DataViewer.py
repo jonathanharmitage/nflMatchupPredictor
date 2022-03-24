@@ -77,6 +77,8 @@ def view_general_teams():
     teams = gds.get_all_teams()
     for team, abb in teams.items():
         print(f'{team}: {abb}')
+    for val in set(teams.values()):
+        print(val)
     input()
 
 

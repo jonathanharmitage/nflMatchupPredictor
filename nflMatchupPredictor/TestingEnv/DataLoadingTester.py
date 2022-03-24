@@ -15,22 +15,27 @@ from nflMatchupPredictor.Scraping.BaseScraper import (BaseScraper)
 from nflMatchupPredictor.Scraping.TeamDataScraper import (TeamDataScraper)
 from nflMatchupPredictor.Scraping.GeneralDataScraper import (
     GeneralDataScraper)
+from nflMatchupPredictor.Models.CorrelationModels import (CorrelationDataLoader,
+                                                          CorrelationModel)
+from nflMatchupPredictor.Models.ModelAnalyzer import ModelAnalyzer
 
 
 def main():
     pd.set_option('display.max_columns', None)
-    dl = DataLoader()
-    util = Utilities()
-    scrape = Scraping()
-    tds = TeamDataScraper('crd')
-    gds = GeneralDataScraper()
+    # dl = DataLoader()
+    # util = Utilities()
+    # scrape = Scraping()
+    # tds = TeamDataScraper('crd')
+    # gds = GeneralDataScraper()
 
-    df = tds.get_schedule(2021)
-    # df = gds.get_schedule(2021)
-    # df = gds.get_all_teams()
-    print(df)
+    cdl = CorrelationDataLoader()
+    cm = CorrelationModel()
 
-    # print(dl.abbrev_to_team_list_map())
+    ma = ModelAnalyzer(cm, cdl)
+    result = ma.analyze([2019, 2020], [2021])
+
+    print(f"{result} = {result[0]/result[1]}")
+    return
 
 
 if __name__ == "__main__":
