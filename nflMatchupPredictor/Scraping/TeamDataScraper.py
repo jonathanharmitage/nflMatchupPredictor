@@ -12,7 +12,6 @@ from nflMatchupPredictor.Scraping.BaseScraper import BaseScraper
 
 
 class TeamDataScraper(BaseScraper):
-
     def __init__(self, team_abbrev):
         BaseScraper.__init__(self)
 
@@ -30,11 +29,12 @@ class TeamDataScraper(BaseScraper):
 
     def get_schedule(self, year):
         soup = super().parse_page(self.team_data_route, self.team_abbrev, year)
-        table = super().get_table(soup, 'games')
+        table = super().get_table(soup, "games")
         df = pd.read_html(str(table))[0]
 
-        columns_level_zero = ["" if "Unnamed" in x else x
-                              for x in df.columns.get_level_values(0)]
+        columns_level_zero = [
+            "" if "Unnamed" in x else x for x in df.columns.get_level_values(0)
+        ]
         columns_level_one = df.columns.get_level_values(1)
 
         joined_cols = []

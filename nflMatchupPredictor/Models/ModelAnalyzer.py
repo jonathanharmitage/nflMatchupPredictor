@@ -36,11 +36,13 @@ class ModelAnalyzer:
                 loser = row.loc["loser_tie"]
 
                 winner_data = self.data_loader.get_teams_stats_by_week(
-                    self.team_map[winner], year, int(week))
+                    self.team_map[winner], year, int(week)
+                )
                 loser_data = self.data_loader.get_teams_stats_by_week(
-                    self.team_map[loser], year, int(week))
+                    self.team_map[loser], year, int(week)
+                )
 
-                result = self. model.make_prediction(winner_data, loser_data)
+                result = self.model.make_prediction(winner_data, loser_data)
 
                 total += 1
                 correct += 1 if result[0] > result[2] else 0

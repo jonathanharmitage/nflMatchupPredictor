@@ -23,10 +23,7 @@ class BaseScraper:
     def get_table(self, soup_object, table_name):
         return soup_object.select(f"table#{table_name}")[0]
 
-    def format_data_frame(self,
-                          df: DataFrame,
-                          rename_columns=None,
-                          to_lower=False):
+    def format_data_frame(self, df: DataFrame, rename_columns=None, to_lower=False):
 
         if rename_columns is not None:
             df.rename(columns=rename_columns, inplace=True)

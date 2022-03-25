@@ -40,9 +40,19 @@ class CorrelationDataLoader:
                 self.indexed_average[year][abb] = average
 
     def columns_to_drop(self):
-        return ["week", "day", "date", "game_time", "boxscore", "ot", "rec", "opp",
-                "expected points_offense", "expected points_defense",
-                "expected points_sp. tms"]
+        return [
+            "week",
+            "day",
+            "date",
+            "game_time",
+            "boxscore",
+            "ot",
+            "rec",
+            "opp",
+            "expected points_offense",
+            "expected points_defense",
+            "expected points_sp. tms",
+        ]
 
     def get_data_by_years(self, years):
         data = pd.DataFrame()
@@ -53,7 +63,7 @@ class CorrelationDataLoader:
 
     def get_teams_stats_by_week(self, team_abb, year, week):
         data = self.indexed_average[year][team_abb]
-        return data.loc[week-1]
+        return data.loc[week - 1]
 
     def load_format_data(self, dl, team_abb, year):
         data = dl.load_data_by_team_and_year(team_abb, year)
@@ -64,9 +74,11 @@ class CorrelationDataLoader:
 
         # Format columns to numbers
         data.loc[:, "win_loss"] = data.apply(
-            lambda row: 1 if row["win_loss"] == "W" else 0, axis=1)
+            lambda row: 1 if row["win_loss"] == "W" else 0, axis=1
+        )
         data.loc[:, "home_away"] = data.apply(
-            lambda row: 0 if row["home_away"] == "@" else 1, axis=1)
+            lambda row: 0 if row["home_away"] == "@" else 1, axis=1
+        )
         data.fillna(0, inplace=True)
 
         # Calculate cumulative and cumulative average data
@@ -102,8 +114,9 @@ class CorrelationModel:
         """
         corr = train_data.corr()
         self.win_corr = corr.iloc[0, 1:]
-        self.all_scores = [self.calculate_team_score(
-            train_data.iloc[i]) for i in range(len(train_data))]
+        self.all_scores = [
+            self.calculate_team_score(train_data.iloc[i]) for i in range(len(train_data))
+        ]
         self.norm = norm(loc=np.mean(self.all_scores), scale=np.std(self.all_scores))
 
     # TODO: make the return value a class perhaps?

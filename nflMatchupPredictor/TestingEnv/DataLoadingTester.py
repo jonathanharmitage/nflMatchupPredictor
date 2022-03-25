@@ -10,18 +10,19 @@ Created on Mon Feb 28 14:00:08 2022
 
 from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
 from nflMatchupPredictor.Utilities.Utilities import *
-from nflMatchupPredictor.Scraping.Scraping import (Scraping)
-from nflMatchupPredictor.Scraping.BaseScraper import (BaseScraper)
-from nflMatchupPredictor.Scraping.TeamDataScraper import (TeamDataScraper)
-from nflMatchupPredictor.Scraping.GeneralDataScraper import (
-    GeneralDataScraper)
-from nflMatchupPredictor.Models.CorrelationModels import (CorrelationDataLoader,
-                                                          CorrelationModel)
+from nflMatchupPredictor.Scraping.Scraping import Scraping
+from nflMatchupPredictor.Scraping.BaseScraper import BaseScraper
+from nflMatchupPredictor.Scraping.TeamDataScraper import TeamDataScraper
+from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
+from nflMatchupPredictor.Models.CorrelationModels import (
+    CorrelationDataLoader,
+    CorrelationModel,
+)
 from nflMatchupPredictor.Models.ModelAnalyzer import ModelAnalyzer
 
 
 def main():
-    pd.set_option('display.max_columns', None)
+    pd.set_option("display.max_columns", None)
     # dl = DataLoader()
     # util = Utilities()
     # scrape = Scraping()

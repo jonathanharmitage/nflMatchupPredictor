@@ -127,8 +127,7 @@ class DataLoader:
         for index in range(len(abbrev_data)):
             if abbrev_data.iloc[index, 1] not in team_list_map.keys():
                 team_list_map[abbrev_data.iloc[index, 1]] = []
-            team_list_map[abbrev_data.iloc[index, 1]].append(
-                abbrev_data.iloc[index, 0])
+            team_list_map[abbrev_data.iloc[index, 1]].append(abbrev_data.iloc[index, 0])
         return team_list_map
 
     def __load_abbrev_df(self):
@@ -138,8 +137,7 @@ class DataLoader:
 
         teams = GeneralDataScraper().get_all_teams()
 
-        df = pd.DataFrame({"Team Name": teams.keys(),
-                          "Team Abbr": teams.values()})
+        df = pd.DataFrame({"Team Name": teams.keys(), "Team Abbr": teams.values()})
         self.utils.write_local(df, "tm_abbrev")
 
         return df
