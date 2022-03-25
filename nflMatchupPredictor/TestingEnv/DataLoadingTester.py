@@ -6,14 +6,14 @@ Created on Mon Feb 28 14:00:08 2022
 @author: willmaethner
 """
 
-# import pandas as pd
+import pandas as pd
 
-from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
-from nflMatchupPredictor.Utilities.Utilities import *
-from nflMatchupPredictor.Scraping.Scraping import Scraping
-from nflMatchupPredictor.Scraping.BaseScraper import BaseScraper
-from nflMatchupPredictor.Scraping.TeamDataScraper import TeamDataScraper
-from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
+# from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
+# from nflMatchupPredictor.Utilities.Utilities import *
+# from nflMatchupPredictor.Scraping.Scraping import Scraping
+# from nflMatchupPredictor.Scraping.BaseScraper import BaseScraper
+# from nflMatchupPredictor.Scraping.TeamDataScraper import TeamDataScraper
+# from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
 from nflMatchupPredictor.Models.CorrelationModels import (
     CorrelationDataLoader,
     CorrelationModel,
