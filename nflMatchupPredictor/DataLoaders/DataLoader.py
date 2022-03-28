@@ -2,9 +2,11 @@ import os
 
 import pandas as pd
 
+
 from dotenv import load_dotenv
 from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
-from nflMatchupPredictor.Utilities.Utilities import Utilities
+from nflMatchupPredictor.Scraping.TeamDataScraper import TeamDataScraper
+from nflMatchupPredictor.Utilities.Utilities import Utilities, FileFormat
 
 
 class DataLoader:
@@ -48,6 +50,48 @@ class DataLoader:
 
         return data_tbl
 
+    def load_data_by_team_and_year(self, team_abb, year, reload=False):
+        """
+        Loads teams schedule and game data by year. Loads from a file when available
+        otherwise scrapes the data and saves it to the file for quicker access later.
+
+        Parameters
+        ----------
+        team_abb : str
+            Teams abbreviation used by PFR.
+        year : int
+            Year to get data from.
+        reload : bool, optional
+            If true the data will be rescraped from PFR even if it is present in the
+            file. Mainly used for current year data that will be added to.
+            The default is False.
+
+        Returns
+        -------
+        DataFrame
+            DESCRIPTION.
+
+        """
+        updated = False
+        if self.utils.file_exists(team_abb, file_format=FileFormat.Pickle):
+            data = self.utils.load_local(team_abb, file_format=FileFormat.Pickle)
+        else:
+            data = pd.DataFrame()
+
+        if reload:
+            data.drop(year, inplace=True)
+
+        if year not in data.index.unique(0).array:
+            tds = TeamDataScraper(team_abb)
+            year_data = tds.get_schedule(year)
+            data = pd.concat([data, pd.concat({year: year_data})])
+            updated = True
+
+        if updated:
+            self.utils.write_local(data, team_abb, file_format=FileFormat.Pickle)
+
+        return data.loc[year]
+
     def team_to_abbrev_map(self):
         """
         Loads a map of NFL team names to their abbreviations on
@@ -83,8 +127,7 @@ class DataLoader:
         for index in range(len(abbrev_data)):
             if abbrev_data.iloc[index, 1] not in team_list_map.keys():
                 team_list_map[abbrev_data.iloc[index, 1]] = []
-            team_list_map[abbrev_data.iloc[index, 1]].append(
-                abbrev_data.iloc[index, 0])
+            team_list_map[abbrev_data.iloc[index, 1]].append(abbrev_data.iloc[index, 0])
         return team_list_map
 
     def __load_abbrev_df(self):
@@ -94,8 +137,7 @@ class DataLoader:
 
         teams = GeneralDataScraper().get_all_teams()
 
-        df = pd.DataFrame({"Team Name": teams.keys(),
-                          "Team Abbr": teams.values()})
+        df = pd.DataFrame({"Team Name": teams.keys(), "Team Abbr": teams.values()})
         self.utils.write_local(df, "tm_abbrev")
 
         return df
