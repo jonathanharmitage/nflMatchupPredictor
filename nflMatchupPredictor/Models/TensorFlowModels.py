@@ -8,10 +8,7 @@ Created on Fri Mar 25 10:22:26 2022
 
 import pandas as pd
 import tensorflow as tf
-import keras_tuner as kt
 import numpy as np
-
-from tensorflow import keras
 
 from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
 from nflMatchupPredictor.Models.BaseModel import BaseModel, BaseModelDataLoader
