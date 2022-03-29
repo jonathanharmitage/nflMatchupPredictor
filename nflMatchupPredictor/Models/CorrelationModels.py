@@ -11,10 +11,10 @@ import pandas as pd
 import numpy as np
 
 from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
-from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
+from nflMatchupPredictor.Models.BaseModel import BaseModel, BaseModelDataLoader
 
 
-class CorrelationDataLoader:
+class CorrelationDataLoader(BaseModelDataLoader):
     # TODO: Make base data loader class (interface) for other models to follow. So
     #       analyzer can run on all models
     def __init__(self):
@@ -24,20 +24,6 @@ class CorrelationDataLoader:
         self.cumulative = pd.DataFrame()
         self.average = pd.DataFrame()
         self.indexed_average = {}
-
-    def load_data(self, years):
-        dl = DataLoader()
-
-        for year in years:
-            self.indexed_average[year] = {}
-            for abb in self.team_abbs:
-                data, cumulative, average = self.load_format_data(dl, abb, year)
-
-                self.raw = pd.concat((self.raw, data))
-                self.cumulative = pd.concat((self.cumulative, cumulative))
-                self.average = pd.concat((self.average, average))
-
-                self.indexed_average[year][abb] = average
 
     def columns_to_drop(self):
         return [
@@ -54,16 +40,12 @@ class CorrelationDataLoader:
             "expected points_sp. tms",
         ]
 
-    def get_data_by_years(self, years):
+    def get_train_data(self, seasons):
         data = pd.DataFrame()
-        for year in years:
+        for season in seasons:
             for abb in self.team_abbs:
-                data = pd.concat((data, self.indexed_average[year][abb]))
+                data = pd.concat((data, self.indexed_average[season][abb]))
         return data
-
-    def get_teams_stats_by_week(self, team_abb, year, week):
-        data = self.indexed_average[year][team_abb]
-        return data.loc[week - 1]
 
     def load_format_data(self, dl, team_abb, year):
         data = dl.load_data_by_team_and_year(team_abb, year)
@@ -91,7 +73,7 @@ class CorrelationDataLoader:
         return data, cumulative, average
 
 
-class CorrelationModel:
+class CorrelationModel(BaseModel):
     # TODO: Make base model class (interface) for other models to follow. So analyzer
     #       can run on all models
     def __init__(self):
@@ -120,7 +102,7 @@ class CorrelationModel:
         self.norm = norm(loc=np.mean(self.all_scores), scale=np.std(self.all_scores))
 
     # TODO: make the return value a class perhaps?
-    def make_prediction(self, team_a_data, team_b_data):
+    def make_prediction(self, home_data, away_data):
         """
 
 
@@ -138,9 +120,16 @@ class CorrelationModel:
             Score for team b, probability for team b.
 
         """
-        a_score = self.calculate_team_score(team_a_data)
-        b_score = self.calculate_team_score(team_b_data)
-        return a_score, self.norm.cdf(a_score), b_score, self.norm.cdf(b_score)
+        home_score = self.calculate_team_score(home_data)
+        away_score = self.calculate_team_score(away_data)
+
+        return 0 if home_score > away_score else 1, (
+            home_score,
+            self.norm.cdf(home_score),
+            away_score,
+            self.norm.cdf(away_score),
+        )
+        # return a_score, self.norm.cdf(a_score), b_score, self.norm.cdf(b_score)
 
     def calculate_team_score(self, team_data):
         score = 0

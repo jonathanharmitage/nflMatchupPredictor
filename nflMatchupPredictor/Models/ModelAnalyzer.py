@@ -20,7 +20,7 @@ class ModelAnalyzer:
     def analyze(self, train_years, test_years):
         gds = GeneralDataScraper()
         self.data_loader.load_data(train_years + test_years)
-        self.model.train(self.data_loader.get_data_by_years(train_years))
+        self.model.train(self.data_loader.get_train_data(train_years))
 
         total, correct = 0, 0
         for year in test_years:
@@ -32,19 +32,12 @@ class ModelAnalyzer:
                 if not str(week).isnumeric():
                     continue
 
-                winner = row.loc["winner_tie"]
-                loser = row.loc["loser_tie"]
-
-                winner_data = self.data_loader.get_teams_stats_by_week(
-                    self.team_map[winner], year, int(week)
-                )
-                loser_data = self.data_loader.get_teams_stats_by_week(
-                    self.team_map[loser], year, int(week)
+                (home_data, away_data, winner) = self.data_loader.get_prediction_data(
+                    row, year
                 )
 
-                result = self.model.make_prediction(winner_data, loser_data)
-
+                result = self.model.make_prediction(home_data, away_data)
                 total += 1
-                correct += 1 if result[0] > result[2] else 0
+                correct += 1 if result[0] == winner else 0
 
         return correct, total

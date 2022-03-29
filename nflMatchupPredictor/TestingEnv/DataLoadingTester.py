@@ -18,6 +18,10 @@ from nflMatchupPredictor.Models.CorrelationModels import (
     CorrelationDataLoader,
     CorrelationModel,
 )
+from nflMatchupPredictor.Models.TensorFlowModels import (
+    TensorFlowModel,
+    TensorFlowDataLoader,
+)
 from nflMatchupPredictor.Models.ModelAnalyzer import ModelAnalyzer
 
 
@@ -28,6 +32,18 @@ def main():
     # scrape = Scraping()
     # tds = TeamDataScraper('crd')
     # gds = GeneralDataScraper()
+    # sched = gds.get_schedule(2021)
+    # print(sched.iloc[0])
+    # # return
+
+    tfdl = TensorFlowDataLoader()
+    tm = TensorFlowModel()
+
+    ma = ModelAnalyzer(tm, tfdl)
+    result = ma.analyze([2019, 2020], [2021])
+
+    print(f"{result} = {result[0]/result[1]}")
+    return
 
     cdl = CorrelationDataLoader()
     cm = CorrelationModel()
