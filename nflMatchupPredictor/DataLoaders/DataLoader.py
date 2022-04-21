@@ -4,9 +4,9 @@ import pandas as pd
 
 
 from dotenv import load_dotenv
-from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
-from nflMatchupPredictor.Scraping.TeamDataScraper import TeamDataScraper
-from nflMatchupPredictor.Utilities.Utilities import Utilities, FileFormat
+from Scraping.GeneralDataScraper import GeneralDataScraper
+from Scraping.TeamDataScraper import TeamDataScraper
+from Utilities.Utilities import Utilities, FileFormat
 
 
 class DataLoader:

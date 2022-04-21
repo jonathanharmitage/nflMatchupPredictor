@@ -6,8 +6,8 @@ Created on Thu Mar 24 11:10:24 2022
 @author: willmaethner
 """
 
-from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
-from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
+from DataLoaders.DataLoader import DataLoader
+from Scraping.GeneralDataScraper import GeneralDataScraper
 
 
 class ModelAnalyzer:
@@ -40,4 +40,4 @@ class ModelAnalyzer:
                 total += 1
                 correct += 1 if result[0] == winner else 0
 
-        return correct, total
+        return (correct, total)
