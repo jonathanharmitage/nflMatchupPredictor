@@ -22,8 +22,15 @@ def create_app(testing=False):
     configure_cli(app)
     configure_apispec(app)
     register_blueprints(app)
+    setup_status(app)
 
     return app
+
+
+def setup_status(app):
+    @app.route("/")
+    def status():
+        return "<p>Running!</p>"
 
 
 def configure_extensions(app):
