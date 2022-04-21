@@ -3,7 +3,6 @@ from flask_restful import Api
 from marshmallow import ValidationError
 
 from Api.api.resources import ModelResource, ModelList
-from Api.api.schemas.models import TrainModelSchema
 from Api.extensions import apispec
 
 blueprint = Blueprint("api", __name__, url_prefix="/api/v1")
