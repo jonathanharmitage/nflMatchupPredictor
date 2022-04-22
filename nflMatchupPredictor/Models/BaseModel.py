@@ -9,8 +9,8 @@ Created on Fri Mar 25 10:36:08 2022
 import pandas as pd
 
 
-from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
-from nflMatchupPredictor.DataLoaders.DataLoader import DataLoader
+from Scraping.GeneralDataScraper import GeneralDataScraper
+from DataLoaders.DataLoader import DataLoader
 
 
 class BaseModelDataLoader:

@@ -321,6 +321,7 @@ CHANGELOG.rst
 Scratches/
 Features.py
 FtRedux.py
-
+nflMatchupPredictor/TestingEnv/my_dir/
+nflMatchupPredictor/Data/
 
 # End of https://www.toptal.com/developers/gitignore/api/osx,python,visualstudiocode,pycharm

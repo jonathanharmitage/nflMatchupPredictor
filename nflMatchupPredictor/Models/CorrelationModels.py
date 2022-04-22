@@ -10,8 +10,8 @@ from scipy.stats import norm
 import pandas as pd
 import numpy as np
 
-from nflMatchupPredictor.Scraping.GeneralDataScraper import GeneralDataScraper
-from nflMatchupPredictor.Models.BaseModel import BaseModel, BaseModelDataLoader
+from Scraping.GeneralDataScraper import GeneralDataScraper
+from Models.BaseModel import BaseModel, BaseModelDataLoader
 
 
 class CorrelationDataLoader(BaseModelDataLoader):

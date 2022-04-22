@@ -8,7 +8,7 @@ Created on Wed Mar  2 09:51:33 2022
 
 import pandas as pd
 
-from nflMatchupPredictor.Scraping.BaseScraper import BaseScraper
+from Scraping.BaseScraper import BaseScraper
 
 
 class GeneralDataScraper(BaseScraper):
